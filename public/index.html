@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesFlow CRM - Neo Enterprise</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Feather Icons for lightweight iconography -->
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="login-screen">
+        <div class="card login-box">
+            <h1 class="login-logo">SalesFlow.</h1>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem; text-align: center; font-size: 0.875rem;">Enterprise CRM & QA Auditor</p>
+            
+            <div id="login-error" class="toast toast-danger" style="display: none; position: static; margin-bottom: 1rem; min-width: 100%;"></div>
+            
+            <form id="login-form" onsubmit="handleLogin(event)" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="form-group">
+                    <label for="login-email">Work Email</label>
+                    <input type="email" id="login-email" class="input-field" required placeholder="name@company.com" value="agent@ideas.pe">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="input-field" required placeholder="••••••••" value="agent123">
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem; width: 100%; padding: 0.75rem;">Sign In to Workspace</button>
+            </form>
+            <div style="margin-top: 2rem; font-size: 0.75rem; color: var(--text-tertiary); text-align: center; font-family: monospace;">
+                <p>Test Accounts (Seed):</p>
+                <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                    <span>director@ideas.pe / director123</span>
+                    <span>agent@ideas.pe / agent123</span>
+                    <span>qa@ideas.pe / qa123</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD SCREEN -->
+    <div id="dashboard-screen" class="app-container" style="display: none;">
+        
+        <!-- HEADER -->
+        <header>
+            <div class="header-left">
+                <h1 style="letter-spacing: -0.05em; font-weight: 700;">SalesFlow.</h1>
+                
+                <!-- Search Trigger (Cmd Palette) -->
+                <button class="search-trigger" onclick="toggleCommandPalette()">
+                    <span style="display: flex; align-items: center; gap: 0.5rem;"><i data-feather="search" style="width: 14px; height: 14px;"></i> Search leads, companies, or commands...</span>
+                    <span class="hotkey-badge">Ctrl+K</span>
+                </button>
+            </div>
+            
+            <div class="header-right">
+                <!-- Theme Toggle -->
+                <button class="btn btn-ghost" onclick="toggleTheme()" title="Toggle Theme" style="padding: 0.5rem;">
+                    <i data-feather="moon" id="theme-icon" style="width: 18px; height: 18px;"></i>
+                </button>
+                
+                <!-- Role Switcher (Simulated for Directors) -->
+                <select id="role-switcher-select" class="input-field" style="width: auto; display: none;" onchange="simulateRoleChange(this.value)">
+                    <option value="director">Director View</option>
+                    <option value="sales_agent">Simulate: Agent</option>
+                    <option value="team_leader">Simulate: Team Leader</option>
+                    <option value="qa_auditor">Simulate: QA Auditor</option>
+                </select>
+
+                <div class="user-meta">
+                    <span class="user-name" id="current-user-name">Loading...</span>
+                    <span class="user-role" id="current-user-role-label">Loading...</span>
+                </div>
+                
+                <button onclick="handleLogout()" class="btn btn-ghost" title="Logout">
+                    <i data-feather="log-out" style="width: 18px; height: 18px;"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- DYNAMIC STATS CARDS -->
+        <section id="stats-section" class="dashboard-grid">
+            <!-- Rendered dynamically by app.js -->
+        </section>
+
+        <!-- MAIN INTERACTIVE SECTION (Kanban / Tables) -->
+        <section id="main-content-section" class="dashboard-grid">
+            <!-- Rendered dynamically based on active role -->
+        </section>
+
+        <!-- DYNAMIC SECONDARY SECTION (Logs, Settings) -->
+        <section id="secondary-content-section" class="dashboard-grid">
+            <!-- Rendered dynamically -->
+        </section>
+
+    </div>
+
+    <!-- PROGRESSIVE DISCLOSURE DRAWER (Side Panel) -->
+    <div class="overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+    <aside class="drawer" id="detail-drawer">
+        <div class="drawer-header">
+            <h2 class="drawer-title" id="drawer-title">Lead Details</h2>
+            <button class="btn-close" onclick="closeDrawer()"><i data-feather="x"></i></button>
+        </div>
+        <div class="drawer-content" id="drawer-content">
+            <!-- Dynamic Content Injected via JS -->
+            <div class="skeleton">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text"></div>
+            </div>
+        </div>
+        <div class="drawer-footer" id="drawer-footer">
+            <!-- Action Buttons Injected via JS -->
+        </div>
+    </aside>
+
+    <!-- COMMAND PALETTE MODAL -->
+    <div class="cmd-palette" id="cmd-palette">
+        <input type="text" class="cmd-input" id="cmd-input" placeholder="Type a command or search..." autocomplete="off">
+        <div class="cmd-results" id="cmd-results">
+            <!-- Search Results injected via JS -->
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- CLIENT SCRIPT -->
+    <script src="app.js"></script>
+    <!-- Initialize Icons -->
+    <script>
+        feather.replace();
+    </script>
+</body>
+</html>

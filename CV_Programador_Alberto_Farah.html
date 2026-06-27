@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alberto Farah Blair - Desarrollador Fullstack & AI Systems Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #090b10;
+            --color-surface: #11141d;
+            --color-surface-light: #1b1f2b;
+            --color-text-main: #f3f4f6;
+            --color-text-muted: #9ca3af;
+            --color-accent: #a3ff00;
+            --color-accent-dim: rgba(163, 255, 0, 0.15);
+            --color-border: rgba(255, 255, 255, 0.06);
+            --font-outfit: 'Outfit', sans-serif;
+            --font-figtree: 'Figtree', sans-serif;
+        }
+
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                color: #0f172a !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            @page {
+                margin: 0;
+                size: A4;
+            }
+            .page {
+                background: #ffffff !important;
+                box-shadow: none !important;
+                border: none !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                margin: 0 !important;
+                overflow: hidden !important;
+            }
+            .side-col {
+                background-color: #f1f5f9 !important;
+                border-left: 1px solid #e2e8f0 !important;
+                color: #334155 !important;
+            }
+            .section-title, .item-title, .job-title, h1 {
+                color: #0f172a !important;
+            }
+            .item-subtitle, h2 {
+                color: #1e3a8a !important;
+                text-shadow: none !important;
+            }
+            .tag {
+                background-color: #f0fdf4 !important;
+                color: #15803d !important;
+                border: 1px solid #bbf7d0 !important;
+            }
+            .tag-gray {
+                background-color: #f1f5f9 !important;
+                color: #475569 !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            .item-desc, .item-bullets li, .summary-text, .profile-summary-box {
+                color: #334155 !important;
+            }
+            /* CRÍTICO: Negritas visibles en PDF */
+            .item-bullets strong, .item-bullets b,
+            .profile-summary-box strong, .profile-summary-box b,
+            .item-title, h1, h2, h3, h4 {
+                color: #0f172a !important;
+            }
+            .item-subtitle {
+                color: #1e3a8a !important;
+            }
+            .profile-img-container {
+                border-color: #1e3a8a !important;
+                box-shadow: none !important;
+            }
+            .section-title::before {
+                color: #1e3a8a !important;
+            }
+            .item-bullets li::before {
+                color: #1e3a8a !important;
+            }
+            .item-card::before {
+                background-color: #1e3a8a !important;
+                box-shadow: none !important;
+            }
+            .sidebar-section-title {
+                color: #1e3a8a !important;
+                border-bottom-color: #1e3a8a !important;
+            }
+            .contact-item, .contact-item a {
+                color: #475569 !important;
+            }
+            .skill-group h4 {
+                color: #0f172a !important;
+            }
+            .language-name {
+                color: #0f172a !important;
+            }
+            .language-level {
+                color: #475569 !important;
+                background-color: #f1f5f9 !important;
+                border-color: #cbd5e1 !important;
+            }
+            .education-item h4 {
+                color: #0f172a !important;
+            }
+            .education-item p {
+                color: #475569 !important;
+            }
+            .contrib-item {
+                color: #334155 !important;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-figtree);
+            background-color: #050608;
+            color: var(--color-text-main);
+            line-height: 1.25;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            background-color: var(--color-bg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            display: grid;
+            grid-template-columns: 2.75fr 1.25fr;
+            border: 1px solid var(--color-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-col {
+            padding: 0.7rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            overflow: hidden;
+        }
+
+        .header-area {
+            border-bottom: 1.5px solid var(--color-border);
+            padding-bottom: 0.25rem;
+        }
+
+        .candidate-name {
+            font-family: var(--font-outfit);
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.05;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+        }
+
+        .candidate-title {
+            font-family: var(--font-outfit);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            margin-top: 0.08rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            text-shadow: 0 0 10px rgba(163, 255, 0, 0.25);
+        }
+
+        .profile-summary-box {
+            font-size: 0.68rem;
+            color: var(--color-text-muted);
+            line-height: 1.32;
+            text-align: justify;
+        }
+
+        .profile-summary-box strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .section-title {
+            font-family: var(--font-outfit);
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.15rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.08rem;
+        }
+
+        .section-title::before {
+            content: '//';
+            color: var(--color-accent);
+            font-weight: 900;
+        }
+
+        .experience-section, .projects-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .item-card {
+            position: relative;
+            padding-left: 0.7rem;
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.28rem;
+            width: 3.5px;
+            height: 3.5px;
+            border-radius: 50%;
+            background-color: var(--color-accent);
+            box-shadow: 0 0 5px var(--color-accent);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.02rem;
+        }
+
+        .item-title {
+            font-family: var(--font-outfit);
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .item-subtitle {
+            font-size: 0.66rem;
+            color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        .item-duration {
+            font-size: 0.64rem;
+            color: var(--color-text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .item-desc {
+            font-size: 0.66rem;
+            color: var(--color-text-muted);
+            line-height: 1.22;
+            text-align: justify;
+        }
+
+        .item-bullets {
+            list-style: none;
+            margin-top: 0.04rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.04rem;
+        }
+
+        .item-bullets li {
+            font-size: 0.68rem;
+            color: var(--color-text-muted);
+            line-height: 1.22;
+            text-align: justify;
+        }
+
+        .bull {
+            color: var(--color-accent);
+            font-weight: bold;
+            margin-right: 0.15rem;
+        }
+
+        .item-bullets strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.15rem;
+            margin-top: 0.12rem;
+        }
+
+        .tag, .tag-gray {
+            display: inline-block;
+            padding: 0.02rem 0.25rem;
+            border-radius: 3px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            font-family: var(--font-outfit);
+            letter-spacing: 0.02em;
+        }
+
+        .tag {
+            background-color: var(--color-accent-dim);
+            color: var(--color-accent);
+            border: 1px solid rgba(163, 255, 0, 0.25);
+        }
+
+        .tag-gray {
+            background-color: var(--color-surface-light);
+            color: #ffffff;
+            border: 1px solid var(--color-border);
+        }
+
+        .side-col {
+            background-color: var(--color-surface);
+            border-left: 1px solid var(--color-border);
+            padding: 0.7rem 0.55rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .profile-img-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 0rem;
+        }
+
+        .profile-img-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 2px solid var(--color-accent);
+            overflow: hidden;
+            box-shadow: 0 0 8px rgba(163, 255, 0, 0.2);
+            background-color: var(--color-surface-light);
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 40% center;
+            transform: scale(1.15);
+        }
+
+        .sidebar-section-title {
+            font-family: var(--font-outfit);
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.2rem;
+            border-bottom: 1.5px solid var(--color-accent);
+            padding-bottom: 0.04rem;
+        }
+
+        .contact-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.18rem;
+        }
+
+        .contact-item {
+            font-size: 0.6rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .contact-item a {
+            color: var(--color-text-muted);
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            color: var(--color-accent);
+        }
+
+        .skill-group {
+            margin-bottom: 0.28rem;
+        }
+
+        .skill-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .skill-group h4 {
+            font-family: var(--font-outfit);
+            color: #ffffff;
+            font-size: 0.58rem;
+            margin-bottom: 0.08rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .languages-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .language-item {
+            font-size: 0.6rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .language-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .language-level {
+            font-size: 0.52rem;
+            color: var(--color-text-muted);
+            background-color: var(--color-surface-light);
+            padding: 0.01rem 0.18rem;
+            border-radius: 3px;
+            border: 1px solid var(--color-border);
+        }
+
+        .education-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .education-item h4 {
+            font-family: var(--font-outfit);
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1.12;
+        }
+
+        .education-item p {
+            font-size: 0.52rem;
+            color: var(--color-text-muted);
+            line-height: 1.15;
+            margin-top: 0.01rem;
+        }
+
+        .contrib-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.12rem;
+        }
+
+        .contrib-item {
+            font-size: 0.55rem;
+            color: var(--color-text-muted);
+            line-height: 1.15;
+        }
+
+        .contrib-item strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Links dentro de viñetas */
+        .item-bullets a {
+            color: var(--color-accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .item-bullets a:hover {
+            text-decoration: underline;
+        }
+        code {
+            font-family: monospace;
+            font-size: 0.6rem;
+            background: rgba(255,255,255,0.07);
+            padding: 0.01rem 0.12rem;
+            border-radius: 2px;
+        }
+
+        @media print {
+            .item-bullets a {
+                color: #1e3a8a !important;
+                text-decoration: underline !important;
+            }
+            code {
+                background: #f1f5f9 !important;
+                color: #475569 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL -->
+        <div class="main-col">
+            <!-- CABECERA -->
+            <div class="header-area">
+                <h1 class="candidate-name">Alberto Farah Blair</h1>
+                <h2 class="candidate-title">Desarrollador Fullstack & AI Systems Builder</h2>
+            </div>
+
+            <!-- RESUMEN -->
+            <div class="profile-summary-box">
+                Desarrollador de software con <strong>+4 a&ntilde;os de experiencia</strong> especializado en <strong>arquitecturas backend, sistemas RAG y agentes aut&oacute;nomos</strong>. Experiencia comprobada en desarrollo fullstack con <strong>React, Next.js, Node.js y Python</strong>. Constructor de agentes de automatizaci&oacute;n de Google Workspace (Drive, Gmail, Sheets) y frameworks MCP. Dise&ntilde;ador de interfaces web Premium con animaciones GSAP/Framer Motion.
+            </div>
+
+            <!-- SECCIÓN: EXPERIENCIA -->
+            <div class="experience-section">
+                <h3 class="section-title">Experiencia Profesional</h3>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-title">L&iacute;der de Desarrollo e Integraci&oacute;n de IA</span>
+                        <span class="item-duration">2025 - Presente</span>
+                    </div>
+                    <div class="item-subtitle">Nanosilhouette / Silhouette OS</div>
+                    <ul class="item-bullets">
+                        <li><span class="bull">&rsaquo;</span><strong>MiWeb Agency OS:</strong> Backend NestJS + frontend React. Simulador financiero Oracle Engine 2.0 y consultor de IA Iris AI (Minimax 2.5).</li>
+                        <li><span class="bull">&rsaquo;</span><strong>Ruflo Swarms:</strong> Orquestador multi-agente para enjambres inteligentes con Claude. CLI Pi-Mono con pods de inferencia local vLLM.</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">NestJS</span>
+                        <span class="tag">React</span>
+                        <span class="tag">TypeScript</span>
+                        <span class="tag">Prisma</span>
+                        <span class="tag">vLLM</span>
+                        <span class="tag">Claude Swarms</span>
+                    </div>
+                </div>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-title">Administrador de Sistemas & Automatizaci&oacute;n</span>
+                        <span class="item-duration">2024 - 2025</span>
+                    </div>
+                    <div class="item-subtitle">Brandistry Automation Systems</div>
+                    <ul class="item-bullets">
+                        <li><span class="bull">&rsaquo;</span><strong>Agente de Google Workspace:</strong> Google Drive & Gmail Agent en Python: auditor&iacute;a de archivos, env&iacute;o de correos, indexaci&oacute;n sem&aacute;ntica y generaci&oacute;n de cotizaciones en Sheets v&iacute;a OAuth 2.0.</li>
+                        <li><span class="bull">&rsaquo;</span><strong>Infraestructura MCP:</strong> Servidores MCP personalizados (mcp-use, nitrostack) para intercomunicar LLMs con bases de datos internas.</li>
+                        <li><span class="bull">&rsaquo;</span><strong>SaaS:</strong> Tienda nanosilhouette-shop con APIs de Mercado Pago/PayPal y webhooks comerciales.</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">Google APIs</span>
+                        <span class="tag">OAuth2</span>
+                        <span class="tag">MCP Server</span>
+                        <span class="tag">Node.js</span>
+                    </div>
+                </div>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-title">Desarrollador Web & Dise&ntilde;ador UI/UX (Freelance)</span>
+                        <span class="item-duration">2020 - Presente</span>
+                    </div>
+                    <div class="item-subtitle">Alberto Farah | albertofarah.com</div>
+                    <ul class="item-bullets">
+                        <li><span class="bull">&rsaquo;</span><strong>React / Tailwind:</strong> <a href="https://santohuevo.com" target="_blank">santohuevo.com</a> (marca de huevos de campo, Arequipa) y <a href="https://trophyclubfrenchies.com" target="_blank">trophyclubfrenchies.com</a> (criadores premium de bulldog franc&eacute;s).</li>
+                        <li><span class="bull">&rsaquo;</span><strong>WordPress / WooCommerce:</strong> <a href="https://nuestrascasasaqp.com" target="_blank">nuestrascasasaqp.com</a> (muebles), <a href="https://bijoume.shop" target="_blank">bijoume.shop</a> (e-commerce de joyer&iacute;a) y <a href="https://virakotravel.com" target="_blank">virakotravel.com</a> (agencia de turismo en Per&uacute;).</li>
+                        <li><span class="bull">&rsaquo;</span><strong>Dise&ntilde;o UI/UX premium:</strong> Sitios con GSAP/Framer Motion: Nouveau Wellness Concierge (reservas de lujo) y <a href="http://www.cidasa.com.pe" target="_blank">cidasa.com.pe</a> (industrial).</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">React</span>
+                        <span class="tag">Tailwind</span>
+                        <span class="tag">GSAP</span>
+                        <span class="tag">WordPress</span>
+                        <span class="tag">WooCommerce</span>
+                        <span class="tag">PHP</span>
+                        <span class="tag">SEO</span>
+                    </div>
+                </div>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-title">Agente de Verificaciones Especializadas</span>
+                        <span class="item-duration">2021 - 2023</span>
+                    </div>
+                    <div class="item-subtitle">Teleperformance (Turo Account)</div>
+                    <ul class="item-bullets">
+                        <li><span class="bull">&rsaquo;</span>Gesti&oacute;n y verificaci&oacute;n de datos bajo est&aacute;ndares de seguridad inform&aacute;tica internacionales (EN/ES).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- SECCIÓN: PROYECTOS DESTACADOS -->
+            <div class="projects-section">
+                <h3 class="section-title">Proyectos de Software Destacados</h3>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-title">Silhouette Brain &mdash; Motor de Memoria Cognitiva</span>
+                    </div>
+                    <div class="item-subtitle">AI Backend Engineer | github.com/haroldfabla2-hue &mdash; causalos-python</div>
+                    <ul class="item-bullets">
+                        <li><span class="bull">&rsaquo;</span>Sistema de memoria en 4 capas para agentes aut&oacute;nomos: RAM/Redis (working), SQLite (medium), TF-IDF vectorial (long) y grafos relacionales (deep).</li>
+                        <li><span class="bull">&rsaquo;</span><strong>Embeddings locales:</strong> Vectorizador TF-IDF propio con normaliz. L2 y Similitud del Coseno &mdash; sin APIs externas ni costos en la nube.</li>
+                        <li><span class="bull">&rsaquo;</span><strong>Persistencia:</strong> Grafos SQLite <code>(source_id, target_id, relationship_type)</code> para conectar carpetas, archivos y contexto conversacional.</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">SQLite</span>
+                        <span class="tag">TF-IDF</span>
+                        <span class="tag">Redis</span>
+                        <span class="tag">LangGraph</span>
+                    </div>
+                </div>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <span class="item-title">Google Drive & Gmail Agent &mdash; Motor de Indexaci&oacute;n</span>
+                    </div>
+                    <div class="item-subtitle">Backend & ML Engineer | Silhouette Brain (4 capas de memoria)</div>
+                    <ul class="item-bullets">
+                        <li><span class="bull">&rsaquo;</span>CLI Python para auditor&iacute;a, b&uacute;squeda sem&aacute;ntica local y automatizaci&oacute;n financiera en Google Workspace.</li>
+                        <li><span class="bull">&rsaquo;</span><strong>Embeddings propios:</strong> Vectorizador TF-IDF con normaliz. L2 y Similitud del Coseno sobre SQLite local.</li>
+                        <li><span class="bull">&rsaquo;</span><strong>Google APIs:</strong> Conexi&oacute;n OAuth 2.0 bidireccional (Drive, Docs, Sheets, Calendar, Gmail).</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">Python</span>
+                        <span class="tag">SQLite</span>
+                        <span class="tag">Google OAuth2</span>
+                        <span class="tag">TF-IDF</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: SIDEBAR -->
+        <div class="side-col">
+            <!-- FOTO DE PERFIL -->
+            <div class="profile-img-container">
+                <div class="profile-img-wrapper">
+                    <img src="foto_perfil.png" alt="Alberto Farah" class="profile-img" onerror="this.src='https://ui-avatars.com/api/?name=Alberto+Farah&background=11141d&color=a3ff00&size=256&font-size=0.33'">
+                </div>
+            </div>
+
+            <!-- CONTACTO -->
+            <div>
+                <h3 class="sidebar-section-title">Contacto</h3>
+                <ul class="contact-list">
+                    <li class="contact-item">📍 Arequipa, Per&uacute;</li>
+                    <li class="contact-item">📞 +51 927845269</li>
+                    <li class="contact-item">✉️ <a href="mailto:albertofarahblair@gmail.com">albertofarahblair@gmail.com</a></li>
+                    <li class="contact-item">🌐 <a href="https://albertofarah.com" target="_blank">albertofarah.com</a></li>
+                    <li class="contact-item">🐙 <a href="https://github.com/haroldfabla2-hue" target="_blank">github.com/haroldfabla2-hue</a></li>
+                    <li class="contact-item">🔗 <a href="https://linkedin.com/in/albertofarah" target="_blank">in/albertofarah</a></li>
+                </ul>
+            </div>
+
+            <!-- TECH STACK -->
+            <div>
+                <h3 class="sidebar-section-title">Habilidades</h3>
+                
+                <div class="skill-group">
+                    <h4>Backend & APIs</h4>
+                    <div class="tech-tags">
+                        <span class="tag">NestJS</span>
+                        <span class="tag">Node.js</span>
+                        <span class="tag">Python</span>
+                        <span class="tag">Prisma</span>
+                        <span class="tag">PHP</span>
+                    </div>
+                </div>
+
+                <div class="skill-group">
+                    <h4>IA & Agentes</h4>
+                    <div class="tech-tags">
+                        <span class="tag">MCP Server</span>
+                        <span class="tag">Ruflo Swarms</span>
+                        <span class="tag">LangGraph</span>
+                        <span class="tag">Ollama/vLLM</span>
+                    </div>
+                </div>
+
+                <div class="skill-group">
+                    <h4>Frontend & Web</h4>
+                    <div class="tech-tags">
+                        <span class="tag-gray">React</span>
+                        <span class="tag-gray">Next.js 15</span>
+                        <span class="tag-gray">TypeScript</span>
+                        <span class="tag-gray">Tailwind</span>
+                        <span class="tag-gray">GSAP</span>
+                        <span class="tag-gray">Framer Motion</span>
+                    </div>
+                </div>
+
+                <div class="skill-group">
+                    <h4>DevOps & Datos</h4>
+                    <div class="tech-tags">
+                        <span class="tag-gray">Docker</span>
+                        <span class="tag-gray">Nginx</span>
+                        <span class="tag-gray">PostgreSQL</span>
+                        <span class="tag-gray">SQLite</span>
+                        <span class="tag-gray">Redis</span>
+                        <span class="tag-gray">Git</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRIBUCIONES OPEN SOURCE -->
+            <div>
+                <h3 class="sidebar-section-title">Open Source</h3>
+                <ul class="contrib-list">
+                    <li class="contrib-item"><strong>FlowiseAI:</strong> Docker Compose fixes</li>
+                    <li class="contrib-item"><strong>N8N:</strong> Chat widget contributions</li>
+                    <li class="contrib-item"><strong>MS/Presidio:</strong> Custom Docker docs</li>
+                    <li class="contrib-item"><strong>LiveKit:</strong> SDK deprecation fixes</li>
+                    <li class="contrib-item"><strong>Anthropic:</strong> Hookify rules & config</li>
+                </ul>
+            </div>
+
+            <!-- IDIOMAS -->
+            <div>
+                <h3 class="sidebar-section-title">Idiomas</h3>
+                <ul class="languages-list">
+                    <li class="language-item">
+                        <span class="language-name">Espa&ntilde;ol</span>
+                        <span class="language-level">Nativo</span>
+                    </li>
+                    <li class="language-item">
+                        <span class="language-name">Ingl&eacute;s</span>
+                        <span class="language-level">Fluido (B2B)</span>
+                    </li>
+                    <li class="language-item">
+                        <span class="language-name">Portugu&eacute;s</span>
+                        <span class="language-level">Avanzado</span>
+                    </li>
+                    <li class="language-item">
+                        <span class="language-name">Alem&aacute;n</span>
+                        <span class="language-level">B&aacute;sico</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- EDUCACIÓN -->
+            <div>
+                <h3 class="sidebar-section-title">Educaci&oacute;n</h3>
+                <div class="education-list">
+                    <div class="education-item">
+                        <h4>Estudios de Arquitectura</h4>
+                        <p>UPC | Lima (Incompleto)</p>
+                    </div>
+                    <div class="education-item">
+                        <h4>Estudios de Administraci&oacute;n</h4>
+                        <p>Inst. Continental | Huancayo (Inc.)</p>
+                    </div>
+                    <div class="education-item">
+                        <h4>Secundaria Completa</h4>
+                        <p>Col. Max Uhle | Arequipa</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

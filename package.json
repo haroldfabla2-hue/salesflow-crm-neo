@@ -1,0 +1,21 @@
+{
+  "name": "salesflow-crm",
+  "version": "1.0.0",
+  "description": "Enterprise Sales CRM & Analytics Dashboard with Law 29733 compliance",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test_api.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "private": true
+}

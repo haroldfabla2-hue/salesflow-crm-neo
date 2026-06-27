@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alberto Farah Blair - Híbrido: Agency Ops & AI Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #0a0a0a;
+            --color-surface: #131313;
+            --color-surface-light: #1a1a1a;
+            --color-text: #e2e8f0;
+            --color-text-muted: #94a3b8;
+            --color-accent: #A3FF00;
+            --color-accent-hover: #8FE000;
+            --color-border: rgba(255, 255, 255, 0.08);
+            --font-outfit: 'Outfit', sans-serif;
+            --font-figtree: 'Figtree', sans-serif;
+        }
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            @page {
+                margin: 0; /* Esto elimina la URL y números de página de Chrome */
+            }
+            * {
+                box-shadow: none !important;
+                text-shadow: none !important;
+            }
+            .page {
+                background-image: none !important;
+                margin: 0 !important;
+                width: 100% !important;
+                border: none !important; /* Elimina el cuadro/borde en el PDF */
+                min-height: auto !important; /* Evita páginas extra */
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-figtree);
+            background-color: #050505;
+            color: var(--color-text);
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page {
+            width: 210mm; 
+            min-height: 297mm;
+            background-color: var(--color-bg);
+            background-image: 
+                radial-gradient(circle at 15% 10%, rgba(163, 255, 0, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 85% 90%, rgba(163, 255, 0, 0.03) 0%, transparent 40%);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--color-border);
+        }
+
+        /* HEADER */
+        .header {
+            padding: 2.5rem 40px;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            border-bottom: 1px solid var(--color-border);
+            background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%);
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+            opacity: 0.5;
+        }
+
+        .profile-img-container {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 2px solid var(--color-accent);
+            box-shadow: 0 0 15px rgba(163, 255, 0, 0.2);
+            overflow: hidden;
+            flex-shrink: 0;
+            background-color: var(--color-surface);
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 40% center; 
+            transform: scale(1.15); 
+        }
+
+        .header-text {
+            flex-grow: 1;
+        }
+
+        .header-text h1 {
+            font-family: var(--font-outfit);
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #ffffff;
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        .header-text h2 {
+            font-family: var(--font-outfit);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-accent);
+            margin-top: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px rgba(163, 255, 0, 0.3);
+        }
+
+        .contact-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.25rem;
+            margin-top: 0.8rem;
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+
+        .contact-bar span {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* TWO COLUMN LAYOUT */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1.1fr;
+            flex-grow: 1;
+        }
+
+        .main-col {
+            padding: 1.5rem 2rem 2rem 40px;
+            border-right: 1px solid var(--color-border);
+        }
+
+        .side-col {
+            padding: 1.5rem 40px 2rem 1.5rem;
+            background-color: var(--color-surface);
+        }
+
+        /* SECTION TITLES */
+        .section-title {
+            font-family: var(--font-outfit);
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.5rem;
+        }
+
+        .section-title::before {
+            content: '>';
+            color: var(--color-accent);
+            font-weight: 900;
+        }
+
+        /* EXPERIENCE & PROJECTS */
+        .item-card {
+            margin-bottom: 1.75rem;
+            position: relative;
+        }
+
+        .item-card::before {
+            content: '';
+            position: absolute;
+            left: -1.25rem;
+            top: 0.4rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--color-accent);
+            box-shadow: 0 0 8px var(--color-accent);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.15rem;
+        }
+
+        .item-title {
+            font-family: var(--font-outfit);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .item-subtitle {
+            font-size: 0.9rem;
+            color: var(--color-accent);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-desc {
+            font-size: 0.85rem;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .item-bullets {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+
+        .item-bullets li {
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+            padding-left: 1rem;
+            position: relative;
+            color: var(--color-text-muted);
+        }
+
+        .item-bullets li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            color: var(--color-accent);
+            font-size: 0.85rem;
+        }
+
+        .item-bullets strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* TECH STACK TAGS */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            background-color: rgba(163, 255, 0, 0.05);
+            color: var(--color-accent);
+            border: 1px solid rgba(163, 255, 0, 0.2);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            font-family: var(--font-outfit);
+            letter-spacing: 0.05em;
+        }
+
+        .tag-gray {
+            background-color: var(--color-surface-light);
+            color: #ffffff;
+            border: 1px solid var(--color-border);
+        }
+
+        /* SIDEBAR SECTIONS */
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .skill-group {
+            margin-bottom: 1rem;
+        }
+
+        .skill-group h4 {
+            font-family: var(--font-outfit);
+            color: #ffffff;
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* PROFILE SUMMARY */
+        .summary-text {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
+            margin-bottom: 1.5rem;
+            border-left: 2px solid var(--color-accent);
+            padding-left: 1rem;
+            font-weight: 400;
+            line-height: 1.6;
+        }
+
+        .summary-text strong {
+            color: #ffffff;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="profile-img-container">
+                <img src="foto_perfil.png" alt="Alberto Farah" class="profile-img" onerror="this.src='https://ui-avatars.com/api/?name=Alberto+Farah&background=111&color=A3FF00&size=256&font-size=0.33'">
+            </div>
+            <div class="header-text">
+                <h1>Alberto Farah Blair</h1>
+                <h2>AI Automation & System Builder</h2>
+                <div class="contact-bar">
+                    <span><span style="color: var(--color-accent)">📍</span> Remoto</span>
+                    <span><span style="color: var(--color-accent)">🌐</span> albertofarah.com</span>
+                    <span><span style="color: var(--color-accent)">🐙</span> github.com/haroldfabla2-hue</span>
+                    <span><span style="color: var(--color-accent)">🔗</span> linkedin.com/in/albertofarah</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <!-- MAIN COLUMN -->
+            <div class="main-col">
+                <div class="summary-text">
+                    <strong>Operador Híbrido & Arquitecto de IA.</strong> Mi ventaja competitiva no es solo codificar agentes, sino <strong>traducir el caos operativo de un negocio en sistemas escalables, automatizados y conectados</strong>. Diseño sistemas que ejecutan operaciones B2B, desde workflows de agencias hasta la infraestructura profunda de orquestación de IA y producto digital. Experto detectando cuellos de botella y resolviendo problemas técnicos complejos con creatividad.
+                </div>
+
+                <h3 class="section-title">Agency Systems & Applied Automation</h3>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4 class="item-title">Nanosilhouette / Silhouette OS</h4>
+                    </div>
+                    <div class="item-subtitle">Fundador & Arquitecto de Producto Propio</div>
+                    <p class="item-desc">Creación de mi propio modelo de agencia e incubadora de tecnología, desarrollando productos internos para orquestar servicios asistidos por IA.</p>
+                    <ul class="item-bullets">
+                        <li><strong>Silhouette OS (Beta):</strong> Plataforma operativa diseñada para agencias que centraliza procesos, automatizaciones y decisiones asistidas por IA. Integrada con React y TypeScript.</li>
+                        <li><strong>Silhouette Brain:</strong> Motor cognitivo desarrollado desde cero. Opera junto a mi agente <em>Openclaw</em> para ejecutar routing inteligente, sync entre herramientas, follow-ups y priorización de workflows corporativos.</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">React / TypeScript</span>
+                        <span class="tag">Openclaw Agent</span>
+                        <span class="tag">Cognitive Routing</span>
+                    </div>
+                </div>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4 class="item-title">Brandistry Automation Systems</h4>
+                    </div>
+                    <div class="item-subtitle">Administración de Sistemas y Orquestación</div>
+                    <p class="item-desc">Optimización radical de la operación interna de la agencia, erradicando cuellos de botella en delegación y organización de proyectos.</p>
+                    <ul class="item-bullets">
+                        <li><strong>Ahorro Masivo de Horas:</strong> Autonomicé flujos críticos de delegación e integré procesos end-to-end conectando CRMs y marketing ops.</li>
+                        <li><strong>Despliegue de Framework Propio:</strong> Utilicé mi propio framework de agentes, integrando <strong>Antigravity</strong> y <strong>Silhouette Brain</strong>, para operar tareas de agencia sin intervención manual constante.</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">Make / Zapier</span>
+                        <span class="tag">Custom Agent Framework</span>
+                        <span class="tag">Agency Ops</span>
+                    </div>
+                </div>
+
+                <h3 class="section-title">AI Infrastructure & Developer Platforms</h3>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4 class="item-title">Contract Generator SaaS</h4>
+                    </div>
+                    <div class="item-subtitle">Creador (Producto Propio B2B)</div>
+                    <p class="item-desc">Plataforma escalable B2B que construí de principio a fin, utilizando modelos generativos para la redacción paramétrica y análisis de cláusulas legales complejas en tiempo real.</p>
+                    <div class="tech-tags">
+                        <span class="tag">LLM Integration</span>
+                        <span class="tag">Prompt Engineering</span>
+                        <span class="tag">React / Next.js</span>
+                    </div>
+                </div>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4 class="item-title">Multi-Agent GitHub Maintenance System</h4>
+                    </div>
+                    <div class="item-subtitle">Infraestructura Server-Side Propia</div>
+                    <p class="item-desc">Arquitectura de un enjambre de agentes autónomos que operan 24/7 en mis servidores propios para resolver fricciones de código.</p>
+                    <ul class="item-bullets">
+                        <li>Automatiza la revisión de PRs y resolución de "good first issues" en repositorios masivos como React, LangGraph y JupyterLab.</li>
+                    </ul>
+                    <div class="tech-tags">
+                        <span class="tag">LangGraph</span>
+                        <span class="tag">Multi-Agent Orchestration</span>
+                        <span class="tag">Python</span>
+                    </div>
+                </div>
+
+                <div class="item-card">
+                    <div class="item-header">
+                        <h4 class="item-title">CausalOS-Python & Pi-Mono</h4>
+                    </div>
+                    <div class="item-subtitle">Colaborador Core Open Source</div>
+                    <p class="item-desc">Contribución a infraestructura fundacional para industrializar el desarrollo de IA.</p>
+                    <ul class="item-bullets">
+                        <li><strong>CausalOS:</strong> Implementación de una capa de memoria causal para evitar la amnesia típica de los sistemas RAG.</li>
+                        <li><strong>Pi-Mono:</strong> Empaquetado de despliegues (vLLM pods, CLIs) probando capacidad de llevar tecnología dura a plataformas utilizables.</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- SIDE COLUMN -->
+            <div class="side-col">
+                <div class="sidebar-section">
+                    <h3 class="section-title">Tech Stack</h3>
+                    
+                    <div class="skill-group">
+                        <h4>Applied Automation</h4>
+                        <div class="tech-tags">
+                            <span class="tag">Make / n8n / Zapier</span>
+                            <span class="tag">MCP Agents</span>
+                            <span class="tag">CRM Orchestration</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-group">
+                        <h4>AI Infrastructure</h4>
+                        <div class="tech-tags">
+                            <span class="tag">LangGraph</span>
+                            <span class="tag">Agent Memory</span>
+                            <span class="tag">Vector DBs</span>
+                            <span class="tag">Python</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-group">
+                        <h4>Product & Web Dev</h4>
+                        <div class="tech-tags">
+                            <span class="tag-gray">React / Next.js</span>
+                            <span class="tag-gray">TypeScript</span>
+                            <span class="tag-gray">TailwindCSS</span>
+                            <span class="tag-gray">UX & Interfaces</span>
+                        </div>
+                    </div>
+
+                    <div class="skill-group">
+                        <h4>Platform & Cloud</h4>
+                        <div class="tech-tags">
+                            <span class="tag-gray">Bash / CLI</span>
+                            <span class="tag-gray">Git / GitHub Actions</span>
+                            <span class="tag-gray">Docker / Pods</span>
+                            <span class="tag-gray">Linux Admin</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="section-title">Perfil Operativo</h3>
+                    <p style="font-size: 0.85rem; color: var(--color-text-muted); font-style: italic; line-height: 1.5;">
+                        "No me rindo ante la fricción técnica. Si una herramienta estándar se rompe o un proceso se estanca, diseño una ruta alternativa. Mi enfoque no es solo escribir código, sino garantizar que los sistemas resuelvan problemas reales de negocio y se mantengan operativos."
+                    </p>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3 class="section-title">Idiomas</h3>
+                    <ul style="list-style: none; font-size: 0.85rem; color: var(--color-text-muted);">
+                        <li style="margin-bottom: 0.5rem;"><strong style="color: #fff;">Español:</strong> Nativo</li>
+                        <li><strong style="color: #fff;">Inglés:</strong> Fluido (Técnico / B2B)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alberto Farah Blair - Currículum Ventas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #ffffff;
+            --color-sidebar: #f8fafc;
+            --color-text-main: #0f172a;
+            --color-text-muted: #475569;
+            --color-accent: #1e3a8a;
+            --color-accent-light: #f0f5ff;
+            --color-accent-border: #cbd5e1;
+            --color-border: #e2e8f0;
+            --font-outfit: 'Outfit', sans-serif;
+            --font-figtree: 'Figtree', sans-serif;
+        }
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                background-color: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            @page {
+                margin: 0;
+                size: A4;
+            }
+            .page {
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                width: 210mm !important;
+                height: 297mm !important;
+                page-break-after: avoid;
+                page-break-before: avoid;
+                overflow: hidden !important;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-figtree);
+            background-color: #f1f5f9;
+            color: var(--color-text-main);
+            line-height: 1.35;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            background-color: var(--color-bg);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: 2.1fr 4.1fr;
+            border: 1px solid var(--color-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            background-color: var(--color-sidebar);
+            border-right: 1px solid var(--color-border);
+            padding: 1.5rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+        }
+
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .profile-img-wrapper {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            border: 3px solid var(--color-accent);
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.15);
+            background-color: #e2e8f0;
+        }
+
+        .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 40% center;
+            transform: scale(1.15);
+        }
+
+        .sidebar-section-title {
+            font-family: var(--font-outfit);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.6rem;
+            border-bottom: 1.5px solid var(--color-accent);
+            padding-bottom: 0.2rem;
+        }
+
+        .contact-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .contact-item {
+            font-size: 0.78rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .contact-item a {
+            color: var(--color-text-muted);
+            text-decoration: none;
+        }
+
+        .contact-item a:hover {
+            color: var(--color-accent);
+        }
+
+        .contact-icon {
+            color: var(--color-accent);
+            font-weight: bold;
+            font-size: 0.85rem;
+            width: 14px;
+            text-align: center;
+        }
+
+        .skills-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .skill-tag {
+            background-color: var(--color-accent-light);
+            color: var(--color-accent);
+            border: 1px solid rgba(30, 58, 138, 0.12);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .languages-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .language-item {
+            font-size: 0.78rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .language-name {
+            font-weight: 600;
+            color: var(--color-text-main);
+        }
+
+        .language-level {
+            font-size: 0.72rem;
+            color: var(--color-text-muted);
+            background-color: #f1f5f9;
+            padding: 0.08rem 0.35rem;
+            border-radius: 3px;
+            border: 1px solid var(--color-border);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            padding: 1.5rem 1.6rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.0rem;
+        }
+
+        .header-title-area {
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 0.6rem;
+        }
+
+        .candidate-name {
+            font-family: var(--font-outfit);
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--color-accent);
+            line-height: 1.1;
+            text-transform: uppercase;
+        }
+
+        .candidate-title {
+            font-family: var(--font-outfit);
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            margin-top: 0.15rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .profile-summary-box {
+            background-color: var(--color-sidebar);
+            border-left: 4px solid var(--color-accent);
+            padding: 0.7rem 0.9rem;
+            font-size: 0.82rem;
+            color: var(--color-text-muted);
+            line-height: 1.45;
+            text-align: justify;
+        }
+
+        .profile-summary-box strong {
+            color: var(--color-text-main);
+        }
+
+        .section-title {
+            font-family: var(--font-outfit);
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 0.25rem;
+        }
+
+        .section-title::before {
+            content: '■';
+            color: var(--color-accent);
+            font-size: 0.7rem;
+        }
+
+        .experience-item {
+            margin-bottom: 0.9rem;
+        }
+
+        .experience-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .experience-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.1rem;
+        }
+
+        .job-title {
+            font-family: var(--font-outfit);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--color-text-main);
+        }
+
+        .company-name {
+            font-size: 0.82rem;
+            color: var(--color-accent);
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .job-duration {
+            font-size: 0.78rem;
+            color: var(--color-text-muted);
+            font-weight: 500;
+        }
+
+        .job-bullets {
+            list-style: none;
+            margin-top: 0.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .job-bullets li {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            padding-left: 0.75rem;
+            position: relative;
+            line-height: 1.35;
+            text-align: justify;
+        }
+
+        .job-bullets li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--color-accent);
+            font-weight: bold;
+        }
+
+        .job-bullets strong {
+            color: var(--color-text-main);
+        }
+
+        .education-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+        }
+
+        .education-item {
+            margin-bottom: 0.2rem;
+        }
+
+        .education-degree {
+            font-family: var(--font-outfit);
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--color-text-main);
+        }
+
+        .education-school {
+            font-size: 0.78rem;
+            color: var(--color-text-muted);
+            line-height: 1.25;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <!-- COLUMNA IZQUIERDA: SIDEBAR -->
+        <div class="sidebar">
+            <div class="profile-container">
+                <div class="profile-img-wrapper">
+                    <img src="foto_perfil.png" alt="Alberto Farah" class="profile-img" onerror="this.src='https://ui-avatars.com/api/?name=Alberto+Farah&background=1e3a8a&color=fff&size=256&font-size=0.33'">
+                </div>
+            </div>
+
+            <div>
+                <h3 class="sidebar-section-title">Contacto</h3>
+                <ul class="contact-list">
+                    <li class="contact-item">
+                        <span class="contact-icon">📍</span>
+                        <span>Arequipa, Perú</span>
+                    </li>
+                    <li class="contact-item">
+                        <span class="contact-icon">📞</span>
+                        <span>+51 927845269</span>
+                    </li>
+                    <li class="contact-item">
+                        <span class="contact-icon">✉️</span>
+                        <span><a href="mailto:albertofarahblair@gmail.com">albertofarahblair@gmail.com</a></span>
+                    </li>
+                    <li class="contact-item">
+                        <span class="contact-icon">🌐</span>
+                        <span><a href="https://albertofarah.com" target="_blank">albertofarah.com</a></span>
+                    </li>
+                    <li class="contact-item">
+                        <span class="contact-icon">🔗</span>
+                        <span><a href="https://linkedin.com/in/albertofarah" target="_blank">in/albertofarah</a></span>
+                    </li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="sidebar-section-title">Habilidades Clave</h3>
+                <ul class="skills-list">
+                    <li class="skill-tag">Ventas Telefónicas / Telesales</li>
+                    <li class="skill-tag">Venta Consultiva B2B</li>
+                    <li class="skill-tag">Gestión del Cliente & CRM</li>
+                    <li class="skill-tag">Automatización Comercial</li>
+                    <li class="skill-tag">Negociación y Cierre de Tratos</li>
+                    <li class="skill-tag">Verificación & Resolución</li>
+                    <li class="skill-tag">Comunicación Interpersonal</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="sidebar-section-title">Idiomas</h3>
+                <ul class="languages-list">
+                    <li class="language-item">
+                        <span class="language-name">Español</span>
+                        <span class="language-level">Nativo</span>
+                    </li>
+                    <li class="language-item">
+                        <span class="language-name">Portugués</span>
+                        <span class="language-level">Avanzado</span>
+                    </li>
+                    <li class="language-item">
+                        <span class="language-name">Inglés</span>
+                        <span class="language-level">Intermedio-Av.</span>
+                    </li>
+                    <li class="language-item">
+                        <span class="language-name">Alemán</span>
+                        <span class="language-level">Básico</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: CONTENIDO PRINCIPAL -->
+        <div class="main-content">
+            <div class="header-title-area">
+                <h1 class="candidate-name">Alberto Farah Blair</h1>
+                <h2 class="candidate-title">Asesor Comercial & Especialista en Ventas</h2>
+            </div>
+
+            <div class="profile-summary-box">
+                <strong>Perfil Comercial:</strong> Profesional con sólida experiencia en <strong>atención al cliente, ventas telefónicas (telesales) y venta consultiva B2B</strong>. Combino excelentes habilidades de comunicación y empatía con conocimientos técnicos avanzados en procesos y automatización. Esto me permite establecer relaciones de confianza inmediatas con profesionales y jefaturas (comunicación peer-to-peer), manejando de forma óptima pipelines de venta en CRM para lograr cierres consistentes y eficientes.
+            </div>
+
+            <div>
+                <h3 class="section-title">Experiencia Profesional</h3>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <span class="job-title">Líder de Desarrollo de Negocios y Producto</span>
+                        <span class="job-duration">2025 - Presente</span>
+                    </div>
+                    <div class="company-name">Nanosilhouette / Silhouette OS</div>
+                    <ul class="job-bullets">
+                        <li><strong>Venta de Licencias SaaS y Soporte:</strong> Lideré el área comercial en el posicionamiento y cierre de contratos de Silhouette OS, vendiendo a fundadores de agencias y decisores tecnológicos.</li>
+                        <li><strong>Venta de Marca Personal (albertofarah.com):</strong> Prospección y negociación directa de proyectos a medida con clientes nacionales e internacionales, logrando conversiones estables de servicios recurrentes.</li>
+                    </ul>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <span class="job-title">Administrador de Proyectos y Operaciones Comerciales</span>
+                        <span class="job-duration">2024 - 2025</span>
+                    </div>
+                    <div class="company-name">Brandistry Automation Systems</div>
+                    <ul class="job-bullets">
+                        <li><strong>Gestión y Cierre Comercial B2B:</strong> Responsable de la comunicación directa con clientes corporativos, liderando el cierre de contratos comerciales y la definición de alcances de proyectos.</li>
+                        <li><strong>CRM & Automatización del Seguimiento:</strong> Diseñé e implementé flujos automatizados que conectan bases de datos con el CRM y WhatsApp, optimizando los tiempos de llamada comercial y eliminando la pérdida de leads.</li>
+                    </ul>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <span class="job-title">Agente de Verificaciones (Turo Account)</span>
+                        <span class="job-duration">2021 - 2023 (Casi 2 años)</span>
+                    </div>
+                    <div class="company-name">Teleperformance</div>
+                    <ul class="job-bullets">
+                        <li><strong>Gestión Telefónica de Alto Volumen:</strong> Atención al cliente y validación de cuentas internacionales en inglés/español bajo exigentes metas diarias de productividad y calidad.</li>
+                        <li><strong>Resolución y Manejo de Objeciones:</strong> Identificación rápida de discrepancias en datos de clientes, manejo de objeciones difíciles y cumplimiento estricto de políticas operativas de seguridad.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="section-title">Educación e Historial Académico</h3>
+                <div class="education-grid">
+                    <div class="education-item">
+                        <h4 class="education-degree">Estudios de Arquitectura (Pregrado)</h4>
+                        <p class="education-school">Universidad Peruana de Ciencias Aplicadas (UPC) | Lima<br><em>(Incompleto)</em></p>
+                    </div>
+                    <div class="education-item">
+                        <h4 class="education-degree">Estudios de Administración</h4>
+                        <p class="education-school">Instituto Continental | Huancayo<br><em>(Incompleto)</em></p>
+                    </div>
+                    <div class="education-item" style="grid-column: span 2;">
+                        <h4 class="education-degree">Educación Secundaria Completa</h4>
+                        <p class="education-school">Colegio Peruano Alemán Max Uhle | Arequipa<br><em>(Formación bilingüe y multicultural, bases de idioma alemán)</em></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

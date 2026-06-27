@@ -1,0 +1,97 @@
+ALBERTO FARAH BLAIR
+DESARROLLADOR FULLSTACK & AI BUILDER
+Desarrollador de software y creador de sistemas especializado en el diseño de arquitecturas
+de backend robustas, sistemas RAG y agentes autónomos. Amplia experiencia en
+desarrollo full-stack utilizando React, Next.js, Node.js y Python. Apasionado por el diseño de
+interfaces web interactivas Premium y la automatización de procesos mediante Inteligencia
+Artificial (LLMs y frameworks MCP).
+// EXPERIENCIA PROFESIONAL
+// PROYECTOS DE SOFTWARE DESTACADOS
+CONTACTO
+📍  Arequipa, Perú
+📞  +51 927845269
+✉albertofarahblair@gmail.com
+🌐albertofarah.com
+🐙github.com/haroldfabla2-hue
+🔗in/albertofarah
+HABILIDADES
+BACKEND & CMS
+NestJS Node.js Python WordPress
+Prisma PHP
+INTELIGENCIA ARTIFICIAL
+MCP Server Ruflo Swarms LangGraph
+Ollama / vLLM
+FRONTEND & WEB
+React Next.js 15 TypeScript
+Tailwind GSAP Framer Motion
+DEVOPS & SEGURIDAD
+Docker Nginx PostgreSQL SQLite
+AES-256 Git
+IDIOMAS
+Español Nativo
+Inglés Fluido (B2B)
+Portugués Avanzado
+Alemán Básico
+EDUCACIÓN
+Estudios de Arquitectura
+UPC | Lima (Incompleto)
+Estudios de Administración
+Inst. Continental | Huancayo (Inc.)
+Secundaria Completa
+Col. Max Uhle | Arequipa
+Líder de Desarrollo e Integración de IA 2025 - Presente
+Nanosilhouette / Silhouette OS
+NestJS React TypeScript Prisma vLLM Claude Swarms
+MiWeb Agency OS: Backend en NestJS y frontend en React. Desarrollé el simulador financiero
+Oracle Engine 2.0 e integré el consultor de IA Iris AI (Minimax 2.5).
+›
+Ruflo Swarms & Pi-Mono: Orquestador multi-agente Ruflo para enjambres inteligentes server-
+side y CLI de agentes Pi-Mono con inferencia local en vLLM.
+›
+Administrador de Sistemas & Fullstack Developer 2024 - 2025
+Brandistry Automation Systems
+Node.js Express MCP Server Mercado Pago API Python
+Infraestructura MCP: Servidores MCP personalizados (mcp-use, nitrostack) para
+intercomunicar LLMs con bases de datos relacionales internas.
+›
+SaaS e Integraciones: Tienda virtual nanosilhouette-shop con APIs de Mercado Pago/PayPal y
+webhooks comerciales automatizados.
+›
+Desarrollador Web & Diseñador UI/UX (Freelance) 2020 - Presente
+WordPress Stack & Creative Frontend | albertofarah.com
+WordPress WooCommerce GSAP Framer Motion SEO PHP
+WordPress & E-Commerce: Tiendas y aulas virtuales (LearnDash/TutorLMS) integrando Stripe
+y optimizando mantenimiento (Dermia, Santo Huevo).
+›
+Portafolio Creativo: Sitios responsivos con animaciones GSAP expuestos en albertofarah.com
+(Nuestras Casas, Nouveau Wellness, Bijou Me).
+›
+Agente de Verificaciones Especializadas 2021 - 2023
+Teleperformance (Turo Account)
+Auditoría de Datos: Gestión y verificación de datos bajo altos estándares de seguridad
+informática internacionales.
+›
+Clínica Elixir (busy-planck) - Sistema Multicanal con IA
+Desarrollador Fullstack & AI Integration Architect
+Plataforma dockerizada (React, Express, Postgres, Redis) de reservas médicas por WhatsApp.
+React Node.js PostgreSQL Redis Docker Ollama
+Seguridad & Datos: Cifrado PII (AES-256-CBC), hashes SHA-256 (Ley N° 29733) y logs
+inmutables (NTS N° 139-MINSA).
+›
+IA & Fallback: AI Gateway con fallback a Llama-4 local (Ollama) para privacidad e historias
+clínicas con validación RAG.
+›
+Bloqueo Redis: Prevención de sobre-reservas mediante bloqueos atómicos en Redis y Google
+Calendar API.
+›
+Google Drive & Gmail Agent (hopeful-noether) - Motor de Indexación
+Desarrollador Backend & Machine Learning Engineer (Local)
+CLI Python para indexación semántica local y automatización de presupuestos en Google
+Workspace.
+Python SQLite Google OAuth2 Vector Search
+Búsqueda Vectorial: Vectorizador TF-IDF con normalización L2 y Similitud del Coseno sobre
+SQLite local.
+›
+Google APIs: Conexión bidireccional mediante flujos OAuth 2.0 (Drive, Docs, Sheets, Calendar,
+Gmail).
+›

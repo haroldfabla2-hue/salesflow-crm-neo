@@ -1,0 +1,586 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ============================================================================
+   DESIGN SYSTEM TOKENS & CSS VARIABLES (SALESFLOW CRM)
+   ============================================================================ */
+:root {
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    
+    /* Core Dark Mode Colors */
+    --bg-main: #090D16;
+    --bg-card: rgba(17, 24, 39, 0.7);
+    --bg-card-hover: rgba(26, 36, 59, 0.8);
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-glow: rgba(59, 130, 246, 0.3);
+    
+    /* Typography Colors */
+    --text-primary: #F9FAFB;
+    --text-secondary: #9CA3AF;
+    --text-muted: #6B7280;
+    
+    /* State/Accent Colors (Vibrant Palette) */
+    --accent-blue: #3B82F6;
+    --accent-purple: #8B5CF6;
+    --accent-emerald: #10B981;
+    --accent-amber: #F59E0B;
+    --accent-rose: #F43F5E;
+    
+    /* Gradients */
+    --gradient-brand: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+    --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    --gradient-warning: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    --gradient-danger: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+    --gradient-dark: linear-gradient(180deg, #111827 0%, #090D16 100%);
+
+    /* Shadows and Blur */
+    --glass-blur: blur(14px) saturate(180%);
+    --shadow-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================================================
+   GLOBAL & LAYOUT STYLES
+   ============================================================================ */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-main);
+    background-image: radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+                      radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.5;
+    overflow-x: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    max-width: 1440px;
+    margin: 0 auto;
+    gap: 1.5rem;
+}
+
+/* Header & Role Switcher */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: var(--shadow-glow);
+}
+
+.logo-section h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.025em;
+}
+
+.logo-section p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.role-switcher {
+    display: flex;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.25rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    gap: 0.25rem;
+}
+
+.role-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.role-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.role-btn.active {
+    color: var(--text-primary);
+    background: var(--gradient-brand);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+/* ============================================================================
+   VIEWS GRID & CARD CONTAINER
+   ============================================================================ */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+}
+
+.card {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-glow);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Metric Widgets */
+.metric-widget {
+    grid-column: span 3;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-widget::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--gradient-brand);
+}
+
+.metric-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.metric-trend {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.trend-up { color: var(--accent-emerald); }
+.trend-down { color: var(--accent-rose); }
+
+/* ============================================================================
+   KANBAN VIEW (AGENT / SELLER ROLE)
+   ============================================================================ */
+.kanban-container {
+    grid-column: span 12;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.kanban-column {
+    background: rgba(17, 24, 39, 0.4);
+    border-radius: 14px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 500px;
+}
+
+.column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.column-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.column-badge {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.kanban-cards-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex-grow: 1;
+    min-height: 400px;
+}
+
+.kanban-card {
+    background: rgba(31, 41, 55, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1rem;
+    cursor: grab;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.kanban-card:active {
+    cursor: grabbing;
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 15px var(--border-glow);
+}
+
+.card-lead-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.card-contact {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.25rem;
+}
+
+.card-date {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+.card-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+/* Status colors */
+.bg-new { background-color: var(--accent-blue); }
+.bg-contacted { background-color: var(--accent-purple); }
+.bg-demo { background-color: var(--accent-amber); }
+.bg-enrolled { background-color: var(--accent-emerald); }
+.bg-lost { background-color: var(--accent-rose); }
+
+/* ============================================================================
+   ANALYTICS & CHARTS (DIRECTIVE / LEADER ROLES)
+   ============================================================================ */
+.chart-card {
+    grid-column: span 6;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.chart-container {
+    height: 250px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    padding-top: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chart-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 10%;
+    height: 100%;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.chart-bar {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    background: var(--gradient-brand);
+    transition: height 1s ease-out;
+    position: relative;
+}
+
+.chart-bar:hover {
+    filter: brightness(1.2);
+}
+
+.chart-bar-value {
+    position: absolute;
+    top: -1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.chart-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Conversion Funnel SVG representation */
+.funnel-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.funnel-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.funnel-label {
+    width: 120px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.funnel-bar-outer {
+    flex-grow: 1;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.funnel-bar-inner {
+    height: 100%;
+    background: var(--gradient-brand);
+    display: flex;
+    align-items: center;
+    padding-left: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: width 1s ease;
+}
+
+/* ============================================================================
+   QA AUDITING (QA ROLE)
+   ============================================================================ */
+.qa-layout {
+    grid-column: span 12;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+}
+
+.qa-calls-list {
+    grid-column: span 4;
+}
+
+.qa-eval-panel {
+    grid-column: span 8;
+}
+
+.qa-item {
+    background: rgba(31, 41, 55, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.qa-item:hover, .qa-item.active {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: var(--accent-blue);
+}
+
+.audio-player-mock {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+.play-btn {
+    background: var(--gradient-brand);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.progress-bar-mock {
+    flex-grow: 1;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    position: relative;
+}
+
+.progress-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--accent-blue);
+    border-radius: 2px;
+}
+
+.rubric-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.rubric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.rubric-slider {
+    width: 150px;
+    accent-color: var(--accent-blue);
+}
+
+/* ============================================================================
+   FORENSIC AUDIT TRAIL TABLE
+   ============================================================================ */
+.audit-card {
+    grid-column: span 12;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.85rem;
+}
+
+th {
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 2px solid var(--border-color);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+tr:hover td {
+    background: rgba(255, 255, 255, 0.01);
+}
+
+/* ============================================================================
+   TOAST NOTIFICATION & MISC
+   ============================================================================ */
+.toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 1000;
+}
+
+.toast {
+    background: rgba(17, 24, 39, 0.95);
+    backdrop-filter: var(--glass-blur);
+    border-left: 4px solid var(--accent-blue);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-radius: 0 8px 8px 0;
+    padding: 1rem;
+    box-shadow: var(--shadow-glow);
+    min-width: 300px;
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast.toast-success { border-left-color: var(--accent-emerald); }
+.toast.toast-warning { border-left-color: var(--accent-amber); }
+.toast.toast-danger { border-left-color: var(--accent-rose); }
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "url": "https://apple.com",
+    "title": "Apple",
+    "meta_description": "Discover the innovative world of Apple and shop everything iPhone, iPad, Apple Watch, Mac, and Apple TV, plus explore accessories, entertainment, and expert device support.",
+    "has_ssl": true,
+    "performance_score": 10.0,
+    "seo_score": 80,
+    "lcp": 7.09,
+    "tbt_ms": 765.0,
+    "loss_latencia_monthly": 61768.12,
+    "loss_speed_to_lead_monthly": 16678.22,
+    "commercial_pitch": "Hola,\n\nAnalizamos la velocidad del sitio móvil de apple.com con la API de Google y detectamos una vulnerabilidad crítica:\n- El tiempo de carga principal (LCP) es de 7.09 segundos (la meta óptima es < 2.0s).\n- Esto reduce su tasa de conversión base en un 30.9%, representando un sangrado financiero estimado de S/. 61768.12 al mes.\n\nCon un tiempo de respuesta comercial de 2.0 horas, sus leads se enfrían. Implementando un sistema enjambre o un agente en WhatsApp RAG (con un tiempo de respuesta de 10 segundos), pueden recuperar S/. 16678.22 mensuales que hoy se pierden en la ventana de abandono.\n\nSi desea ver el flujo lógico de optimización y la arquitectura técnica de 3 páginas en PDF sin compromiso, responda a este mensaje."
+}

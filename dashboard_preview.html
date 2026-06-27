@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesFlow CRM - Panel de Control & Analíticas</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER AND ROLE SELECTOR -->
+        <header>
+            <div class="logo-section">
+                <h1>SalesFlow CRM</h1>
+                <p>Cumplimiento Ley N° 29733 | Seguridad & Auditoría Activa</p>
+            </div>
+            <div class="role-switcher">
+                <button class="role-btn active" onclick="switchRole('sales_agent', this)">Vendedor</button>
+                <button class="role-btn" onclick="switchRole('team_leader', this)">Jefe de Equipo</button>
+                <button class="role-btn" onclick="switchRole('qa_auditor', this)">Auditor QA</button>
+                <button class="role-btn" onclick="switchRole('director', this)">Directivo</button>
+            </div>
+        </header>
+
+        <!-- DYNAMIC STATS CARDS -->
+        <section id="stats-section" class="dashboard-grid">
+            <!-- Rendered dynamically by JavaScript -->
+        </section>
+
+        <!-- MAIN INTERACTIVE SECTION -->
+        <section id="main-content-section" class="dashboard-grid">
+            <!-- Rendered dynamically based on active role -->
+        </section>
+
+        <!-- DYNAMIC SECONDARY SECTION (Audit logs for Director, Team list for Team Leader) -->
+        <section id="secondary-content-section" class="dashboard-grid">
+            <!-- Rendered dynamically -->
+        </section>
+
+        <!-- TOAST NOTIFICATION CONTAINER -->
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT STATE ENGINE -->
+    <script>
+        // 1. DATA STATE (Leads, Users, Logs)
+        let state = {
+            activeRole: 'sales_agent',
+            currentUser: {
+                id: 'usr-1',
+                name: 'Alberto Farah',
+                role: 'sales_agent'
+            },
+            leads: [
+                { id: 'lead-1', firstName: 'Juan', lastName: 'Pérez', email: 'j.perez@ideas.edu.pe', phone: '+51 987654321', status: 'new', agentId: 'usr-1', agentName: 'Alberto Farah', qaScore: 92, consent: true, date: '2026-06-25' },
+                { id: 'lead-2', firstName: 'Maria', lastName: 'Rodríguez', email: 'm.rod@gmail.com', phone: '+51 999888777', status: 'contacted', agentId: 'usr-2', agentName: 'José Silva', qaScore: null, consent: true, date: '2026-06-26' },
+                { id: 'lead-3', firstName: 'Carlos', lastName: 'Fuentes', email: 'c.fuentes@outlook.com', phone: '+51 912345678', status: 'scheduled', agentId: 'usr-1', agentName: 'Alberto Farah', qaScore: null, consent: true, date: '2026-06-27' },
+                { id: 'lead-4', firstName: 'Ana', lastName: 'Gómez', email: 'ana.gomez@gmail.com', phone: '+51 933221100', status: 'enrolled', agentId: 'usr-2', agentName: 'José Silva', qaScore: 85, consent: true, date: '2026-06-24' },
+                { id: 'lead-5', firstName: 'Ricardo', lastName: 'López', email: 'r.lopez@yahoo.com', phone: '+51 955443322', status: 'new', agentId: 'usr-1', agentName: 'Alberto Farah', qaScore: null, consent: true, date: '2026-06-27' },
+                { id: 'lead-6', firstName: 'Elena', lastName: 'Diaz', email: 'elena.d@domain.pe', phone: '+51 944112233', status: 'lost', agentId: 'usr-2', agentName: 'José Silva', qaScore: null, consent: true, date: '2026-06-23' }
+            ],
+            auditLogs: [
+                { id: 101, actor: 'Alberto Farah', role: 'sales_agent', action: 'read_contact_info', target: 'Lead: Juan Pérez', ip: '192.168.1.45', date: '12:05:43', delta: 'Ofuscación dinámica aplicada (Vendedor).' },
+                { id: 102, actor: 'José Silva', role: 'sales_agent', action: 'update_lead_status', target: 'Lead: Ana Gómez', ip: '192.168.1.12', date: '14:22:10', delta: 'Estado modificado: scheduled -> enrolled.' },
+                { id: 103, actor: 'Alberto Farah', role: 'director', action: 'read_contact_info', target: 'Lead: Maria Rodríguez', ip: '200.48.56.12', date: '15:10:02', delta: 'Desencriptación autorizada (Director).' }
+            ],
+            qaCalls: [
+                { id: 'call-1', leadName: 'Juan Pérez', agentName: 'Alberto Farah', duration: 125, date: 'Hace 2 horas', audioUrl: 'demo.mp3', evaluated: true, score: 92 },
+                { id: 'call-2', leadName: 'Maria Rodríguez', agentName: 'José Silva', duration: 84, date: 'Hace 4 horas', audioUrl: 'demo2.mp3', evaluated: false, score: null },
+                { id: 'call-3', leadName: 'Carlos Fuentes', agentName: 'Alberto Farah', duration: 210, date: 'Ayer', audioUrl: 'demo3.mp3', evaluated: false, score: null }
+            ],
+            selectedCallId: 'call-2',
+            playInterval: null
+        };
+
+        // 2. CRYPTO MOCK FUNCTIONS
+        function getMaskedEmail(email) {
+            const parts = email.split('@');
+            if (parts.length !== 2) return '*****';
+            return parts[0].slice(0, 3) + '*****@' + parts[1];
+        }
+
+        function getMaskedPhone(phone) {
+            return phone.slice(0, 6) + '***' + phone.slice(-3);
+        }
+
+        // 3. TOAST WRAPPER
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerText = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // 4. SWITCH ROLE
+        function switchRole(role, btnElement) {
+            state.activeRole = role;
+            
+            // Update active button styling
+            const buttons = document.querySelectorAll('.role-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            // Log action in audit trail
+            const newLog = {
+                id: state.auditLogs.length + 101,
+                actor: 'Alberto Farah',
+                role: role,
+                action: 'login',
+                target: `Sesión de Rol: ${role}`,
+                ip: '192.168.1.45',
+                date: new Date().toTimeString().split(' ')[0],
+                delta: `Cambio de contexto operativo a ${role}.`
+            };
+            state.auditLogs.unshift(newLog);
+
+            showToast(`Rol cambiado a: ${role.toUpperCase()}`, 'success');
+            renderDashboard();
+        }
+
+        // 5. DRAG & DROP FOR KANBAN
+        let draggedCard = null;
+
+        function handleDragStart(e) {
+            draggedCard = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.id);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            return false;
+        }
+
+        function handleDrop(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const leadId = e.dataTransfer.getData('text/plain');
+            const newStatus = this.dataset.status;
+
+            const leadIndex = state.leads.findIndex(l => l.id === leadId);
+            if (leadIndex !== -1) {
+                const oldStatus = state.leads[leadIndex].status;
+                state.leads[leadIndex].status = newStatus;
+                
+                // Show celebration toast if matriculado (enrolled)
+                if (newStatus === 'enrolled') {
+                    showToast(`🎉 ¡MATRÍCULA GANADA! ${state.leads[leadIndex].firstName} se ha matriculado.`, 'success');
+                } else {
+                    showToast(`Lead movido a ${newStatus.toUpperCase()}`, 'success');
+                }
+
+                // Add to audit logs
+                state.auditLogs.unshift({
+                    id: state.auditLogs.length + 101,
+                    actor: 'Alberto Farah',
+                    role: state.activeRole,
+                    action: 'update_lead_status',
+                    target: `Lead: ${state.leads[leadIndex].firstName} ${state.leads[leadIndex].lastName}`,
+                    ip: '192.168.1.45',
+                    date: new Date().toTimeString().split(' ')[0],
+                    delta: `Estado cambiado: ${oldStatus} -> ${newStatus}.`
+                });
+
+                renderDashboard();
+            }
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedCard = null;
+        }
+
+        // 6. RENDER ENGINE
+        function renderDashboard() {
+            const statsSection = document.getElementById('stats-section');
+            const mainContent = document.getElementById('main-content-section');
+            const secondaryContent = document.getElementById('secondary-content-section');
+
+            // Clear sections
+            statsSection.innerHTML = '';
+            mainContent.innerHTML = '';
+            secondaryContent.innerHTML = '';
+
+            if (state.activeRole === 'sales_agent') {
+                // STATS FOR SALES AGENT
+                const myLeads = state.leads.filter(l => l.agentId === state.currentUser.id);
+                const conversions = myLeads.filter(l => l.status === 'enrolled').length;
+                
+                statsSection.innerHTML = `
+                    <div class="card metric-widget">
+                        <div class="metric-title">Mis Leads Asignados</div>
+                        <div class="metric-value">${myLeads.length}</div>
+                        <div class="metric-trend trend-up">Filtrado RLS Activo</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Matrículas Cerradas</div>
+                        <div class="metric-value">${conversions}</div>
+                        <div class="metric-trend trend-up">Tasa de Conversión: ${((conversions/Math.max(myLeads.length, 1))*100).toFixed(0)}%</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Agendados Hoy</div>
+                        <div class="metric-value">${myLeads.filter(l => l.status === 'scheduled').length}</div>
+                        <div class="metric-trend">Llamadas prioritarias</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Comisión Estimada</div>
+                        <div class="metric-value">S/. ${(conversions * 150).toFixed(2)}</div>
+                        <div class="metric-trend trend-up">+12% vs mes anterior</div>
+                    </div>
+                `;
+
+                // MAIN CONTENT: KANBAN FOR SALES AGENT
+                mainContent.innerHTML = `
+                    <div class="card" style="grid-column: span 12;">
+                        <h2 style="margin-bottom: 1rem;">Mi Pipeline de Ventas (Arrastrar y Soltar)</h2>
+                        <div class="kanban-container">
+                            <div class="kanban-column" data-status="new">
+                                <div class="column-header">
+                                    <span class="column-title">Nuevos</span>
+                                    <span class="column-badge bg-new" id="badge-new">0</span>
+                                </div>
+                                <div class="kanban-cards-wrapper" id="column-new" data-status="new"></div>
+                            </div>
+                            <div class="kanban-column" data-status="contacted">
+                                <div class="column-header">
+                                    <span class="column-title">Contactados</span>
+                                    <span class="column-badge bg-contacted" id="badge-contacted">0</span>
+                                </div>
+                                <div class="kanban-cards-wrapper" id="column-contacted" data-status="contacted"></div>
+                            </div>
+                            <div class="kanban-column" data-status="scheduled">
+                                <div class="column-header">
+                                    <span class="column-title">Agendados</span>
+                                    <span class="column-badge bg-demo" id="badge-scheduled">0</span>
+                                </div>
+                                <div class="kanban-cards-wrapper" id="column-scheduled" data-status="scheduled"></div>
+                            </div>
+                            <div class="kanban-column" data-status="enrolled">
+                                <div class="column-header">
+                                    <span class="column-title">Matriculados</span>
+                                    <span class="column-badge bg-enrolled" id="badge-enrolled">0</span>
+                                </div>
+                                <div class="kanban-cards-wrapper" id="column-enrolled" data-status="enrolled"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Populate Kanban cards (Restricted by RLS: Agent usr-1 only)
+                const myFilteredLeads = state.leads.filter(l => l.agentId === state.currentUser.id && l.status !== 'lost' && l.status !== 'arco_cancelled');
+                
+                // Count columns
+                const counts = { new: 0, contacted: 0, scheduled: 0, enrolled: 0 };
+                
+                myFilteredLeads.forEach(lead => {
+                    counts[lead.status]++;
+                    const col = document.getElementById(`column-${lead.status}`);
+                    const card = document.createElement('div');
+                    card.className = 'kanban-card';
+                    card.draggable = true;
+                    card.dataset.id = lead.id;
+                    
+                    // Personal Data Protection: Mask emails and phones for Sales Agents!
+                    const maskedEmail = getMaskedEmail(lead.email);
+                    const maskedPhone = getMaskedPhone(lead.phone);
+
+                    card.innerHTML = `
+                        <div class="card-lead-name">${lead.firstName} ${lead.lastName}</div>
+                        <div class="card-contact">📞 ${maskedPhone}</div>
+                        <div class="card-contact">✉️ ${maskedEmail}</div>
+                        <div class="card-footer">
+                            <span class="card-date">${lead.date}</span>
+                            <span class="card-indicator bg-${lead.status}"></span>
+                        </div>
+                    `;
+
+                    // Drag Events
+                    card.addEventListener('dragstart', handleDragStart);
+                    card.addEventListener('dragend', handleDragEnd);
+
+                    col.appendChild(card);
+                });
+
+                // Update badges
+                document.getElementById('badge-new').innerText = counts.new;
+                document.getElementById('badge-contacted').innerText = counts.contacted;
+                document.getElementById('badge-scheduled').innerText = counts.scheduled;
+                document.getElementById('badge-enrolled').innerText = counts.enrolled;
+
+                // Add dragover and drop events to columns wrapper
+                const wrappers = document.querySelectorAll('.kanban-cards-wrapper');
+                wrappers.forEach(wrap => {
+                    wrap.addEventListener('dragover', handleDragOver);
+                    wrap.addEventListener('drop', handleDrop);
+                });
+
+            } else if (state.activeRole === 'team_leader') {
+                // STATS FOR TEAM LEADER
+                const teamLeads = state.leads; // Can see all leads for team members
+                const avgQA = Math.round(state.leads.filter(l => l.qaScore !== null).reduce((acc, curr) => acc + curr.qaScore, 0) / Math.max(state.leads.filter(l => l.qaScore !== null).length, 1));
+
+                statsSection.innerHTML = `
+                    <div class="card metric-widget">
+                        <div class="metric-title">Leads Totales Equipo</div>
+                        <div class="metric-value">${teamLeads.length}</div>
+                        <div class="metric-trend trend-up">Gestión de 2 Agentes</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Conversión Promedio</div>
+                        <div class="metric-value">22%</div>
+                        <div class="metric-trend trend-up">+3% vs promedio general</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Calificación QA Media</div>
+                        <div class="metric-value">${avgQA}/100</div>
+                        <div class="metric-trend trend-up">Rúbrica de Cumplimiento</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Meta de Facturación</div>
+                        <div class="metric-value">S/. 12,000</div>
+                        <div class="metric-trend trend-up">Faltan S/. 4,500</div>
+                    </div>
+                `;
+
+                // MAIN CONTENT: LEAD REASSIGNMENT QUEUE
+                mainContent.innerHTML = `
+                    <div class="card" style="grid-column: span 12;">
+                        <h2 style="margin-bottom: 1rem;">Consola de Asignación y Reasignación (Jefe de Equipo)</h2>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Lead</th>
+                                        <th>Estado</th>
+                                        <th>Agente Actual</th>
+                                        <th>Fecha Ingreso</th>
+                                        <th>Acción de Reasignación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${state.leads.map(lead => `
+                                        <tr>
+                                            <td><strong>${lead.firstName} ${lead.lastName}</strong></td>
+                                            <td><span style="padding: 2px 8px; border-radius:4px; font-size: 0.75rem;" class="bg-${lead.status}">${lead.status.toUpperCase()}</span></td>
+                                            <td>${lead.agentName}</td>
+                                            <td>${lead.date}</td>
+                                            <td>
+                                                <select onchange="reassignLead('${lead.id}', this.value)" style="background:#1f2937; color:white; border:1px solid rgba(255,255,255,0.1); padding: 4px; border-radius:4px; font-size: 0.8rem;">
+                                                    <option value="usr-1" ${lead.agentId === 'usr-1' ? 'selected' : ''}>Alberto Farah</option>
+                                                    <option value="usr-2" ${lead.agentId === 'usr-2' ? 'selected' : ''}>José Silva</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+            } else if (state.activeRole === 'qa_auditor') {
+                // STATS FOR QA
+                const pendingAudits = state.qaCalls.filter(c => !c.evaluated).length;
+                statsSection.innerHTML = `
+                    <div class="card metric-widget">
+                        <div class="metric-title">Llamadas Auditadas</div>
+                        <div class="metric-value">${state.qaCalls.filter(c => c.evaluated).length}</div>
+                        <div class="metric-trend trend-up">Muestreo de conformidad</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Pendientes de Evaluación</div>
+                        <div class="metric-value">${pendingAudits}</div>
+                        <div class="metric-trend trend-down">Meta diaria: 5</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Puntuación Promedio</div>
+                        <div class="metric-value">88.5</div>
+                        <div class="metric-trend trend-up">Objetivo mínimo: 85</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Infracciones Críticas</div>
+                        <div class="metric-value">0</div>
+                        <div class="metric-trend">Ley 29733 Ok</div>
+                    </div>
+                `;
+
+                // MAIN CONTENT: QA LAYOUT (LIST + AUDITOR PANEL)
+                const selectedCall = state.qaCalls.find(c => c.id === state.selectedCallId);
+                
+                mainContent.innerHTML = `
+                    <div class="qa-layout">
+                        <!-- CALLS LIST -->
+                        <div class="card qa-calls-list">
+                            <h3 style="margin-bottom: 1rem;">Grabaciones Recientes</h3>
+                            ${state.qaCalls.map(call => `
+                                <div class="qa-item ${call.id === state.selectedCallId ? 'active' : ''}" onclick="selectCall('${call.id}')">
+                                    <div>
+                                        <div style="font-size: 0.85rem; font-weight:600;">${call.leadName}</div>
+                                        <div style="font-size: 0.7rem; color:var(--text-secondary);">${call.agentName} | ${call.duration}s</div>
+                                    </div>
+                                    <span style="font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; background: ${call.evaluated ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}">
+                                        ${call.evaluated ? `Evaluado: ${call.score}` : 'Pendiente'}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <!-- EVALUATION PANEL -->
+                        <div class="card qa-eval-panel">
+                            <h3>Rúbrica de Auditoría de Llamada</h3>
+                            <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 1.5rem;">Auditoría para ${selectedCall ? selectedCall.leadName : 'Ninguna seleccionada'}</p>
+                            
+                            <!-- Mock Audio Player -->
+                            <div class="audio-player-mock">
+                                <button class="play-btn" onclick="togglePlayMock()"><span id="play-icon">▶</span></button>
+                                <div style="font-size:0.8rem; font-family:monospace; min-width: 40px;" id="audio-time">0:00</div>
+                                <div class="progress-bar-mock">
+                                    <div class="progress-fill" id="progress-fill"></div>
+                                </div>
+                                <div style="font-size:0.8rem; font-family:monospace;">${selectedCall ? Math.floor(selectedCall.duration/60) + ':' + (selectedCall.duration%60).toString().padStart(2,'0') : '0:00'}</div>
+                            </div>
+
+                            <!-- Compliance checklists -->
+                            <div class="rubric-grid">
+                                <div class="rubric-row">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="chk-saludo" checked>
+                                        <span>Saludo e Identificación Corporativa</span>
+                                    </label>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">Obligatorio</span>
+                                </div>
+                                <div class="rubric-row">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="chk-ley" ${selectedCall && selectedCall.evaluated ? 'checked' : ''}>
+                                        <strong>Lectura Cláusula Privacidad (Ley 29733)</strong>
+                                    </label>
+                                    <span style="font-size:0.75rem; color:var(--accent-rose); font-weight:600;">Control Crítico</span>
+                                </div>
+                                <div class="rubric-row">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="chk-objecion" checked>
+                                        <span>Tratamiento de Objeciones del Prospecto</span>
+                                    </label>
+                                    <span style="font-size:0.75rem; color:var(--text-muted);">Calificación de Cierre</span>
+                                </div>
+                                <div class="rubric-row">
+                                    <span>Puntuación de Empatía y Tono</span>
+                                    <input type="range" class="rubric-slider" id="sld-tono" min="0" max="100" value="${selectedCall && selectedCall.evaluated ? selectedCall.score : 80}">
+                                </div>
+                            </div>
+
+                            <button onclick="saveQAScore()" style="background:var(--gradient-brand); border:none; color:white; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight:600; cursor:pointer;">Guardar Auditoría</button>
+                        </div>
+                    </div>
+                `;
+
+            } else if (state.activeRole === 'director') {
+                // STATS FOR EXECUTIVE
+                const totalIncome = state.leads.filter(l => l.status === 'enrolled').length * 2000;
+                
+                statsSection.innerHTML = `
+                    <div class="card metric-widget">
+                        <div class="metric-title">Ingresos Totales (Matrículas)</div>
+                        <div class="metric-value">S/. ${totalIncome.toLocaleString()} PEN</div>
+                        <div class="metric-trend trend-up">Tipo Cambio: S/. 3.75</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Costo de Adquisición (CAC)</div>
+                        <div class="metric-value">S/. 125.40 PEN</div>
+                        <div class="metric-trend trend-down">-8.4% este mes</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Conversión del Embudo</div>
+                        <div class="metric-value">16.7%</div>
+                        <div class="metric-trend trend-up">+1.2% de incremento</div>
+                    </div>
+                    <div class="card metric-widget">
+                        <div class="metric-title">Margen Neto Proyectado</div>
+                        <div class="metric-value">82.4%</div>
+                        <div class="metric-trend trend-up">Estructura SaaS limpia</div>
+                    </div>
+                `;
+
+                // MAIN CONTENT: DIRECTIVE GRAPHICS (SVG FUNNEL)
+                const counts = { new: 0, contacted: 0, scheduled: 0, enrolled: 0 };
+                state.leads.forEach(l => {
+                    if (counts[l.status] !== undefined) counts[l.status]++;
+                });
+
+                const totalLeads = state.leads.length;
+
+                mainContent.innerHTML = `
+                    <div class="card chart-card">
+                        <h3>Embudo de Conversión de Ventas B2B</h3>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 1rem;">Conversión general de leads en tiempo real</p>
+                        <div class="funnel-container">
+                            <div class="funnel-row">
+                                <span class="funnel-label">Nuevos</span>
+                                <div class="funnel-bar-outer">
+                                    <div class="funnel-bar-inner" style="width: 100%;">${totalLeads} Leads (100%)</div>
+                                </div>
+                            </div>
+                            <div class="funnel-row">
+                                <span class="funnel-label">Contactados</span>
+                                <div class="funnel-bar-outer">
+                                    <div class="funnel-bar-inner" style="width: ${((counts.new + counts.contacted + counts.scheduled + counts.enrolled)/totalLeads * 100).toFixed(0)}%; background:var(--accent-purple);">
+                                        ${counts.new + counts.contacted + counts.scheduled + counts.enrolled} Leads
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="funnel-row">
+                                <span class="funnel-label">Agendados</span>
+                                <div class="funnel-bar-outer">
+                                    <div class="funnel-bar-inner" style="width: ${((counts.scheduled + counts.enrolled)/totalLeads * 100).toFixed(0)}%; background:var(--accent-amber);">
+                                        ${counts.scheduled + counts.enrolled} Leads
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="funnel-row">
+                                <span class="funnel-label">Matriculados</span>
+                                <div class="funnel-bar-outer">
+                                    <div class="funnel-bar-inner" style="width: ${(counts.enrolled/totalLeads * 100).toFixed(0)}%; background:var(--gradient-success);">
+                                        ${counts.enrolled} Alumnos (${(counts.enrolled/totalLeads * 100).toFixed(0)}%)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card chart-card">
+                        <div class="chart-header">
+                            <h3>Gestión ARCO y Protección de Datos</h3>
+                            <button onclick="simulateARCO()" style="background:var(--gradient-danger); border:none; color:white; padding: 0.5rem 1rem; border-radius: 6px; font-weight:600; cursor:pointer; font-size: 0.8rem;">Ejecutar Cancelación ARCO</button>
+                        </div>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 1rem;">Lógica de anonimización irreversible (Ley N° 29733)</p>
+                        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); padding: 1rem; border-radius:8px; font-size:0.8rem;">
+                            <div style="margin-bottom:0.5rem;"><strong>Lead a Anónimizar:</strong> Carlos Fuentes (ID: lead-3)</div>
+                            <div style="margin-bottom:0.5rem; color:var(--text-secondary);">El proceso destruirá sus campos de correo y teléfono (encriptados), reemplazándolos con ruido aleatorio criptográfico para preservar las estadísticas del embudo de conversión pero eliminando sus datos personales.</div>
+                            <div style="font-family:monospace; color:var(--accent-emerald);">Decryption_Key_Status: Secure_AES_Rotation</div>
+                        </div>
+                    </div>
+                `;
+
+                // SECONDARY CONTENT: FORENSIC AUDIT TRAIL TABLE (ONLY FOR DIRECTORS)
+                secondaryContent.innerHTML = `
+                    <div class="card audit-card">
+                        <h3>Bitácora Forense de Accesos (Audit Trail) - Inmutable</h3>
+                        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom: 1rem;">Registro de auditoría exigido por la ANPD ante consultas de datos encriptados</p>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID Log</th>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Acción</th>
+                                        <th>Entidad Target</th>
+                                        <th>Dirección IP</th>
+                                        <th>Marca de Tiempo</th>
+                                        <th>Detalles de Auditoría</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${state.auditLogs.map(log => `
+                                        <tr>
+                                            <td>#${log.id}</td>
+                                            <td><strong>${log.actor}</strong></td>
+                                            <td><span style="font-size:0.75rem; background:rgba(255,255,255,0.06); padding:2px 6px; border-radius:4px;">${log.role.toUpperCase()}</span></td>
+                                            <td><span style="color: ${log.action.includes('read') ? 'var(--accent-blue)' : log.action.includes('update') ? 'var(--accent-amber)' : 'var(--accent-rose)'}">${log.action.toUpperCase()}</span></td>
+                                            <td>${log.target}</td>
+                                            <td><code>${log.ip}</code></td>
+                                            <td>${log.date}</td>
+                                            <td style="font-size:0.8rem; color:var(--text-secondary);">${log.delta}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 7. INTERACTIVE ACTION ACTIONS
+        function reassignLead(leadId, newAgentId) {
+            const lead = state.leads.find(l => l.id === leadId);
+            if (lead) {
+                const oldAgent = lead.agentName;
+                lead.agentId = newAgentId;
+                lead.agentName = newAgentId === 'usr-1' ? 'Alberto Farah' : 'José Silva';
+                
+                showToast(`Lead reasignado a ${lead.agentName}`, 'success');
+
+                // Add to audit logs
+                state.auditLogs.unshift({
+                    id: state.auditLogs.length + 101,
+                    actor: 'Alberto Farah',
+                    role: state.activeRole,
+                    action: 'update_lead_status',
+                    target: `Lead: ${lead.firstName} ${lead.lastName}`,
+                    ip: '192.168.1.45',
+                    date: new Date().toTimeString().split(' ')[0],
+                    delta: `Reasignado: ${oldAgent} -> ${lead.agentName}.`
+                });
+
+                renderDashboard();
+            }
+        }
+
+        function selectCall(callId) {
+            state.selectedCallId = callId;
+            // Stop playing current mock
+            if (state.playInterval) {
+                clearInterval(state.playInterval);
+                state.playInterval = null;
+            }
+            renderDashboard();
+        }
+
+        function togglePlayMock() {
+            const fill = document.getElementById('progress-fill');
+            const playIcon = document.getElementById('play-icon');
+            const timer = document.getElementById('audio-time');
+            const selectedCall = state.qaCalls.find(c => c.id === state.selectedCallId);
+
+            if (state.playInterval) {
+                // Pause
+                clearInterval(state.playInterval);
+                state.playInterval = null;
+                playIcon.innerText = '▶';
+                showToast('Reproducción pausada', 'warning');
+            } else {
+                // Play
+                playIcon.innerText = '⏸';
+                showToast('Reproduciendo audio de llamada...', 'success');
+                let pct = parseFloat(fill.style.width) || 0;
+                
+                state.playInterval = setInterval(() => {
+                    pct += (100 / selectedCall.duration);
+                    if (pct >= 100) {
+                        pct = 100;
+                        clearInterval(state.playInterval);
+                        state.playInterval = null;
+                        playIcon.innerText = '▶';
+                        showToast('Llamada finalizada', 'success');
+                    }
+                    fill.style.width = pct + '%';
+                    const elapsed = Math.floor((pct/100) * selectedCall.duration);
+                    timer.innerText = Math.floor(elapsed/60) + ':' + (elapsed%60).toString().padStart(2, '0');
+                }, 1000);
+            }
+        }
+
+        function saveQAScore() {
+            const score = document.getElementById('sld-tono').value;
+            const chkLey = document.getElementById('chk-ley').checked;
+            const call = state.qaCalls.find(c => c.id === state.selectedCallId);
+
+            if (call) {
+                call.evaluated = true;
+                call.score = parseInt(score, 10);
+                
+                // Update associated lead score
+                const leadNameParts = call.leadName.split(' ');
+                const lead = state.leads.find(l => l.firstName === leadNameParts[0]);
+                if (lead) {
+                    lead.qaScore = call.score;
+                }
+
+                if (!chkLey) {
+                    showToast('⚠️ ALERTA QA: No se verificó la lectura de la cláusula Ley 29733.', 'danger');
+                } else {
+                    showToast(`Auditoría guardada. Calificación de llamada: ${score}/100`, 'success');
+                }
+
+                // Add to audit logs
+                state.auditLogs.unshift({
+                    id: state.auditLogs.length + 101,
+                    actor: 'Alberto Farah',
+                    role: state.activeRole,
+                    action: 'update_lead_status',
+                    target: `Llamada Lead: ${call.leadName}`,
+                    ip: '192.168.1.45',
+                    date: new Date().toTimeString().split(' ')[0],
+                    delta: `Auditoría guardada. Puntuación: ${score}. Cumple Script Legal: ${chkLey ? 'SÍ' : 'NO'}.`
+                });
+
+                renderDashboard();
+            }
+        }
+
+        function simulateARCO() {
+            const lead = state.leads.find(l => l.id === 'lead-3');
+            if (lead && lead.status !== 'arco_cancelled') {
+                const oldName = lead.firstName + ' ' + lead.lastName;
+                lead.firstName = 'ARCO_CANCELADO';
+                lead.lastName = 'ARCO_CANCELADO';
+                lead.email = '3b82f6a... [Cifrado destruido]';
+                lead.phone = '10b981... [Cifrado destruido]';
+                lead.status = 'arco_cancelled';
+                
+                showToast(`Derecho ARCO de cancelación ejecutado para: ${oldName}`, 'danger');
+
+                // Add to audit logs
+                state.auditLogs.unshift({
+                    id: state.auditLogs.length + 101,
+                    actor: 'Alberto Farah',
+                    role: state.activeRole,
+                    action: 'arco_anonymize',
+                    target: `Lead ID: lead-3`,
+                    ip: '192.168.1.45',
+                    date: new Date().toTimeString().split(' ')[0],
+                    delta: `Anonimización irreversible completada. Claves criptográficas destruidas.`
+                });
+
+                renderDashboard();
+            } else {
+                showToast('El lead Carlos Fuentes ya fue anonimizado por derecho ARCO.', 'warning');
+            }
+        }
+
+        // 8. INITIALIZE APP
+        renderDashboard();
+    </script>
+</body>
+</html>

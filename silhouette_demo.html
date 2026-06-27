@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Silhouette OS - Demo Interactiva de Automatización e IA</title>
+    <meta name="description" content="Demostración interactiva premium del cerebro en capas (Silhouette Brain) y flujos autónomos de IA y n8n para agencias de alto rendimiento.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-base: #060913;
+            --bg-panel: rgba(15, 23, 42, 0.6);
+            --border-glow: rgba(56, 189, 248, 0.15);
+            --border-glow-active: rgba(56, 189, 248, 0.4);
+            --cyan-neon: #38BDF8;
+            --blue-neon: #2563EB;
+            --glow-green: #10B981;
+            --glow-violet: #8B5CF6;
+            
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+                linear-gradient(rgba(255,255,255,0.003) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.003) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1.25rem 2.5rem;
+            border-bottom: 1px solid var(--border-glow);
+            backdrop-filter: blur(12px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .badge-live {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--glow-green);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.25rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .badge-live::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background-color: var(--glow-green);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 8px var(--glow-green);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.9); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.5; }
+        }
+
+        .header-title h1 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FFF, var(--cyan-neon));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-title p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.1rem;
+        }
+
+        .client-profile-nav {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .nav-item-active {
+            color: var(--cyan-neon);
+            border-bottom: 2px solid var(--cyan-neon);
+            padding-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        /* Dashboard Workspace Grid */
+        .workspace {
+            display: grid;
+            grid-template-columns: 460px 1fr;
+            flex: 1;
+            overflow: hidden;
+            padding: 1.5rem;
+            gap: 1.5rem;
+            height: calc(100vh - 75px);
+        }
+
+        /* General Panel Styling */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: 1rem;
+            backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: border-color 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: rgba(56, 189, 248, 0.25);
+        }
+
+        .panel-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-glow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Left Panel - Silhouette Brain Engine */
+        .brain-engine {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 0.85rem 1.15rem;
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .message-user {
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            color: var(--text-primary);
+            align-self: flex-end;
+            border-bottom-right-radius: 0.2rem;
+        }
+
+        .message-agent {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            align-self: flex-start;
+            border-bottom-left-radius: 0.2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Execution Logs (Capa visualizer) */
+        .brain-logs {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(56, 189, 248, 0.1);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        .log-line {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .log-capa-1 { color: var(--cyan-neon); }
+        .log-capa-2 { color: var(--glow-violet); }
+        .log-capa-3 { color: var(--warning); }
+        .log-capa-4 { color: var(--glow-green); }
+
+        .suggested-prompts {
+            padding: 1rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            border-top: 1px solid var(--border-glow);
+        }
+
+        .prompt-chip {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-glow);
+            padding: 0.4rem 0.8rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .prompt-chip:hover {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--cyan-neon);
+            border-color: var(--cyan-neon);
+        }
+
+        .input-bar {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--border-glow);
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-glow);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--cyan-neon);
+        }
+
+        .btn-send {
+            background: var(--blue-neon);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0 1.25rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-send:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.5);
+        }
+
+        /* Right Panel Layout */
+        .workspace-right {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-value {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metric-glow-border {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyan-neon), var(--blue-neon));
+        }
+
+        /* n8n Flow Simulator */
+        .flow-simulator {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-area {
+            flex: 1;
+            padding: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Nodes */
+        .node {
+            width: 110px;
+            height: 110px;
+            background: #0B132B;
+            border: 2px solid var(--border-glow);
+            border-radius: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-align: center;
+            padding: 0.5rem;
+        }
+
+        .node:hover {
+            transform: scale(1.05);
+            border-color: var(--cyan-neon);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+
+        .node.active-node {
+            border-color: var(--glow-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .node-icon {
+            font-size: 1.75rem;
+        }
+
+        .node-label {
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .node-sub {
+            color: var(--text-muted);
+            font-size: 0.6rem;
+        }
+
+        /* SVG Connections */
+        .svg-connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .conn-path {
+            stroke: var(--border-glow);
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 8, 8;
+            animation: dash 30s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        .conn-path-active {
+            stroke: var(--cyan-neon);
+            stroke-width: 3;
+            fill: none;
+        }
+
+        /* Pulse Dot along connections */
+        .pulse-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--glow-green);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 5;
+            box-shadow: 0 0 12px var(--glow-green);
+            display: none;
+        }
+
+        /* Console Output */
+        .terminal-panel {
+            height: 150px;
+            background: rgba(5, 8, 18, 0.95);
+            border-top: 1px solid var(--border-glow);
+            padding: 1rem 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            color: #A7F3D0;
+        }
+
+        .terminal-prompt {
+            color: var(--cyan-neon);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="header-title">
+                <h1>Silhouette OS v2.0</h1>
+                <p>Cerebro Cognitivo Multicapa & Automatizaciones Integradas</p>
+            </div>
+            <div class="badge-live">MOTOR ONLINE</div>
+        </div>
+        <div class="client-profile-nav">
+            <span class="nav-item-active">Demo Panel</span>
+            <span>n8n Flows</span>
+            <span>Database Monitor</span>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <!-- Left Panel: Chatbot Simulator -->
+        <div class="panel brain-engine">
+            <div class="panel-header">
+                <div class="panel-title">🧠 Silhouette Brain Engine</div>
+                <div style="font-size: 0.75rem; color: var(--cyan-neon);">TF-IDF local: Activo</div>
+            </div>
+            
+            <!-- Chat logs area -->
+            <div class="chat-area" id="chat-box">
+                <div class="message message-agent">
+                    Hola Alberto. Soy el motor de Silhouette OS. Aquí puedes simular en tiempo real cómo el cerebro en capas procesa la entrada, recupera contextos históricos de la base de datos y ejecuta acciones autónomas.
+                </div>
+            </div>
+
+            <!-- Suggested prompts -->
+            <div class="suggested-prompts">
+                <span class="prompt-chip" onclick="triggerSimulation('Registrar nuevo lead web de inmobiliaria', 1)">📥 Registrar Lead</span>
+                <span class="prompt-chip" onclick="triggerSimulation('Buscar historial del cliente Farah', 2)">🔍 Buscar Historial</span>
+                <span class="prompt-chip" onclick="triggerSimulation('Generar borrador de propuesta de desarrollo', 3)">📄 Generar Propuesta</span>
+            </div>
+
+            <!-- Input area -->
+            <div class="input-bar">
+                <input type="text" class="chat-input" id="custom-prompt" placeholder="Escribe un comando o petición al agente...">
+                <button class="btn-send" onclick="triggerCustomSimulation()">Ejecutar</button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visual flow & Metrics -->
+        <div class="workspace-right">
+            <!-- Metrics Row -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="metric-label">Leads Procesados</span>
+                    <span class="metric-value" id="metric-leads">1,428</span>
+                    <div class="metric-glow-border" style="background: var(--cyan-neon);"></div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Costo por Token (Promedio)</span>
+                    <span class="metric-value">$0.0018</span>
+                    <div class="metric-glow-border" style="background: var(--glow-violet);"></div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Tiempo de Calificación</span>
+                    <span class="metric-value" id="metric-time">12.4s</span>
+                    <div class="metric-glow-border" style="background: var(--glow-green);"></div>
+                </div>
+                <div class="metric-card">
+                    <span class="metric-label">Ahorro de Tiempo (Horas)</span>
+                    <span class="metric-value">148.5h</span>
+                    <div class="metric-glow-border" style="background: var(--blue-neon);"></div>
+                </div>
+            </div>
+
+            <!-- n8n Node Flow Simulation -->
+            <div class="panel flow-simulator">
+                <div class="panel-header">
+                    <div class="panel-title">🔌 n8n Workflow Simulator (Visualizer)</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">Haz click en un nodo para probar</div>
+                </div>
+
+                <div class="canvas-area">
+                    <!-- Connections -->
+                    <svg class="svg-connections" id="svg-conn">
+                        <!-- Curved connections -->
+                        <path id="path1" class="conn-path" d="M 100, 110 Q 150, 110 200, 110" />
+                        <path id="path2" class="conn-path" d="M 310, 110 Q 360, 110 410, 110" />
+                        <path id="path3" class="conn-path" d="M 520, 110 Q 570, 110 620, 110" />
+                        <path id="path4" class="conn-path" d="M 730, 110 Q 780, 110 830, 110" />
+                    </svg>
+
+                    <!-- Pulse Dot -->
+                    <div class="pulse-dot" id="pulse-dot"></div>
+
+                    <!-- Node 1 -->
+                    <div class="node" id="node-webhook">
+                        <span class="node-icon">📥</span>
+                        <span class="node-label">Webhook Lead</span>
+                        <span class="node-sub">Formulario Web</span>
+                    </div>
+
+                    <!-- Node 2 -->
+                    <div class="node" id="node-brain">
+                        <span class="node-icon">🧠</span>
+                        <span class="node-label">Silhouette Brain</span>
+                        <span class="node-sub">Claude 3.5 / TF-IDF</span>
+                    </div>
+
+                    <!-- Node 3 -->
+                    <div class="node" id="node-crm">
+                        <span class="node-icon">💾</span>
+                        <span class="node-label">CRM Update</span>
+                        <span class="node-sub">PostgreSQL / API</span>
+                    </div>
+
+                    <!-- Node 4 -->
+                    <div class="node" id="node-whatsapp">
+                        <span class="node-icon">💬</span>
+                        <span class="node-label">WhatsApp Send</span>
+                        <span class="node-sub">API Business</span>
+                    </div>
+
+                    <!-- Node 5 -->
+                    <div class="node" id="node-sheets">
+                        <span class="node-icon">📊</span>
+                        <span class="node-label">Google Sheets</span>
+                        <span class="node-sub">Logger</span>
+                    </div>
+                </div>
+
+                <!-- Live Terminal Console -->
+                <div class="terminal-panel" id="terminal-box">
+                    <div><span class="terminal-prompt">> </span>Silhouette OS Engine inicializado en puerto local 4000.</div>
+                    <div><span class="terminal-prompt">> </span>Conexiones listas con drive_brain.db (personal) y APIs de Google.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const terminalBox = document.getElementById('terminal-box');
+        const pulseDot = document.getElementById('pulse-dot');
+        
+        // Coordenadas aproximadas para la animación del dot sobre los nodos
+        // Webhook (x: 100), Brain (x: 280), CRM (x: 460), WhatsApp (x: 640), Sheets (x: 820)
+        const nodePositions = [
+            { x: 70, y: 155 },
+            { x: 280, y: 155 },
+            { x: 490, y: 155 },
+            { x: 700, y: 155 },
+            { x: 910, y: 155 }
+        ];
+
+        function logToTerminal(message) {
+            const line = document.createElement('div');
+            line.innerHTML = `<span class="terminal-prompt">> </span>${message}`;
+            terminalBox.appendChild(line);
+            terminalBox.scrollTop = terminalBox.scrollHeight;
+        }
+
+        // Simulación principal
+        function triggerSimulation(promptText, type) {
+            // Añadir mensaje del usuario
+            appendMessage(promptText, 'user');
+            
+            // Simular logs de procesamiento del cerebro en capas
+            let logsContainer = document.createElement('div');
+            logsContainer.className = 'brain-logs';
+            chatBox.appendChild(logsContainer);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            setTimeout(() => {
+                logsContainer.innerHTML += `<div class="log-line"><span class="log-capa-1">⚡ Capa 1 (RAM):</span> Entrada recibida. Analizando intención...</div>`;
+                logToTerminal('Capa 1 (RAM) activa: Analizando intenciones semánticas.');
+                animateNodePulse(0, 1);
+            }, 600);
+
+            setTimeout(() => {
+                logsContainer.innerHTML += `<div class="log-line"><span class="log-capa-2">💾 Capa 2 (Medium Memory):</span> Consultando SQLite drive_brain.db para contexto.</div>`;
+                logToTerminal('Capa 2 (SQLite) buscando registros históricos coincidentes.');
+                animateNodePulse(1, 2);
+            }, 1500);
+
+            setTimeout(() => {
+                logsContainer.innerHTML += `<div class="log-line"><span class="log-capa-3">🔍 Capa 3 (Long Memory):</span> TF-IDF Match. Vocabulario similar al 94.5% con la base de conocimiento.</div>`;
+                logToTerminal('Capa 3 (TF-IDF local) computando embeddings de vocabulario.');
+                animateNodePulse(2, 3);
+            }, 2400);
+
+            setTimeout(() => {
+                logsContainer.innerHTML += `<div class="log-line"><span class="log-capa-4">🕸️ Capa 4 (Deep Memory):</span> Cargando relaciones de grafos relacionales de archivos.</div>`;
+                logToTerminal('Capa 4 (Grafo relacional de SQLite) cargando dependencias de carpeta.');
+                animateNodePulse(3, 4);
+            }, 3200);
+
+            // Respuesta del agente según el caso
+            setTimeout(() => {
+                let responseText = '';
+                if (type === 1) {
+                    responseText = "<strong>Lead procesado:</strong> Se ha registrado el nuevo lead en la base de datos local SQLite. El perfilador detectó 'Inmobiliaria' como nicho y 'Presupuesto Alto' ($4,500). El trigger de n8n ha ejecutado el envío de WhatsApp calificado al equipo comercial. Conexión de webhook finalizada.";
+                    incrementMetric('metric-leads', 1);
+                    document.getElementById('metric-time').innerText = '4.2s';
+                } else if (type === 2) {
+                    responseText = "<strong>Historial de Contexto:</strong> Se recuperaron 3 documentos relacionados de Alberto Farah. 1) Propuesta comercial de desarrollo web en PEN, 2) Archivo de presupuesto de costos en Excel y 3) Guiones de prospección comercial. El cerebro los ha cargado en la memoria activa.";
+                    document.getElementById('metric-time').innerText = '1.8s';
+                } else {
+                    responseText = "<strong>Contrato / Propuesta generada:</strong> He construido el borrador personalizado para el servicio de AI Ops (Plan Profesional - $4,500 USD). El hash SHA-256 de seguridad ha sido guardado. Documento listo en el bucket S3 local.";
+                    document.getElementById('metric-time').innerText = '5.1s';
+                }
+
+                appendMessage(responseText, 'agent');
+                logToTerminal('Transacción completada exitosamente.');
+            }, 4200);
+        }
+
+        // Simular ejecución manual
+        function triggerCustomSimulation() {
+            const input = document.getElementById('custom-prompt');
+            const val = input.value.trim();
+            if (!val) return;
+            triggerSimulation(val, 1);
+            input.value = '';
+        }
+
+        function appendMessage(text, sender) {
+            const msg = document.createElement('div');
+            msg.className = `message message-${sender}`;
+            msg.innerHTML = text;
+            chatBox.appendChild(msg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Animación dinámica del flujo de nodos
+        function animateNodePulse(fromIdx, toIdx) {
+            const start = nodePositions[fromIdx];
+            const end = nodePositions[toIdx];
+            
+            // Marcar nodos como activos temporalmente
+            const nodes = ['node-webhook', 'node-brain', 'node-crm', 'node-whatsapp', 'node-sheets'];
+            document.querySelectorAll('.node').forEach(n => n.classList.remove('active-node'));
+            document.getElementById(nodes[fromIdx]).classList.add('active-node');
+            
+            pulseDot.style.display = 'block';
+            pulseDot.style.left = `${start.x}px`;
+            pulseDot.style.top = `${start.y}px`;
+
+            // Animación manual del dot
+            let startTime = null;
+            const duration = 600; // ms
+
+            function animate(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const elapsed = timestamp - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Interpolación lineal simple
+                const currentX = start.x + (end.x - start.x) * progress;
+                const currentY = start.y + (end.y - start.y) * progress;
+                
+                pulseDot.style.left = `${currentX}px`;
+                pulseDot.style.top = `${currentY}px`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    document.getElementById(nodes[toIdx]).classList.add('active-node');
+                    pulseDot.style.display = 'none';
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function incrementMetric(id, value) {
+            const element = document.getElementById(id);
+            let val = parseInt(element.innerText.replace(',', ''));
+            val += value;
+            element.innerText = val.toLocaleString();
+        }
+    </script>
+</body>
+</html>
