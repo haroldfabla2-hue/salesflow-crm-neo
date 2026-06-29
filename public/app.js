@@ -15,7 +15,8 @@ let state = {
     metrics: null,
     selectedCallId: null,
     playInterval: null,
-    theme: localStorage.getItem('sf_theme') || 'light'
+    theme: localStorage.getItem('sf_theme') || 'light',
+    socket: null
 };
 
 // ----------------------------------------------------------------------------
@@ -102,6 +103,10 @@ async function handleLogin(e) {
 }
 
 function handleLogout() {
+    if (state.socket) {
+        state.socket.disconnect();
+        state.socket = null;
+    }
     localStorage.removeItem('sf_token');
     localStorage.removeItem('sf_user');
     state.token = null;
@@ -111,6 +116,35 @@ function handleLogout() {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('dashboard-screen').style.display = 'none';
     showToast('Session ended safely.', 'warning');
+}
+
+function initSocket() {
+    if (state.token && !state.socket) {
+        // Inicializar WebSocket enviando el JWT para la verificación perimetral
+        state.socket = io({
+            auth: {
+                token: state.token
+            }
+        });
+
+        state.socket.on('connect', () => {
+            console.log('🔌 Conectado al servidor WebSocket en tiempo real.');
+        });
+
+        // Escuchar alertas de nuevos mensajes del servidor (Sprint 2)
+        state.socket.on('new_message_alert', (data) => {
+            showToast(`Mensaje entrante de ${data.from}: "${data.preview}"`, 'info');
+        });
+
+        state.socket.on('connect_error', (err) => {
+            console.error('Error de conexión WebSocket:', err.message);
+            showToast(`Error de conexión WebSocket: ${err.message}`, 'error');
+        });
+
+        state.socket.on('disconnect', () => {
+            console.log('🔌 Desconectado del servidor WebSocket.');
+        });
+    }
 }
 
 function checkAuth() {
@@ -137,6 +171,8 @@ function checkAuth() {
             switcher.style.display = 'none';
         }
 
+        // Inicializar conexión Socket de tiempo real
+        initSocket();
         fetchData();
     } else {
         document.getElementById('login-screen').style.display = 'flex';

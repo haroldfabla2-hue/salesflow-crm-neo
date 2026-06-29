@@ -477,15 +477,91 @@ app.get('/api/metrics', authenticateToken, requireRole(['director', 'team_leader
     }
 });
 
+// ----------------------------------------------------------------------------
+// WEBSOCKETS & ASYNCHRONOUS QUEUES SETUP
+// ----------------------------------------------------------------------------
+
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require('socket.io');
+const io = new Server(server, {
+    cors: {
+        origin: "*", // En producción real, restringir a orígenes específicos
+        methods: ["GET", "POST"]
+    }
+});
+
+// Compartir la instancia de io globalmente en Express
+app.set('io', io);
+
+// Middleware de autenticación para WebSockets
+io.use((socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    if (!token) {
+        return next(new Error('Acceso denegado. Token de autenticación de Socket requerido.'));
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) {
+            return next(new Error('Token de Socket inválido o expirado.'));
+        }
+        socket.user = user;
+        next();
+    });
+});
+
+io.on('connection', (socket) => {
+    console.log(`🔌 Asesor conectado a Socket.io: ${socket.user.name} (${socket.user.role})`);
+    
+    // Unir al asesor a salas privadas basadas en ID y en su Rol para difusión selectiva de eventos
+    socket.join(`user:${socket.user.id}`);
+    socket.join(`role:${socket.user.role}`);
+
+    socket.on('disconnect', () => {
+        console.log(`🔌 Asesor desconectado: ${socket.user.name}`);
+    });
+});
+
+// Importar el gestor de colas y configurar un Worker de pruebas
+const queueManager = require('./queue');
+
+queueManager.registerWorker('whatsapp_ingestion_queue', async (job) => {
+    console.log(`[Worker Ingesta] Procesando mensaje entrante de: ${job.data.from}`);
+    // Aquí implementaremos el parseo real y WebSockets en el Sprint 2
+    
+    // Emitir confirmación en tiempo real al rol de ventas
+    io.to('role:sales_agent').to('role:director').emit('new_message_alert', {
+        from: job.data.from,
+        preview: job.data.message
+    });
+});
+
+// Ruta de prueba para verificar el funcionamiento de las colas y WebSockets
+app.post('/api/test-queue', authenticateToken, async (req, res) => {
+    const { from, message } = req.body;
+    try {
+        await queueManager.addJob('whatsapp_ingestion_queue', 'test_message_job', {
+            from: from || 'Sistema de Pruebas',
+            message: message || '¡Hola! Este es un mensaje asíncrono.'
+        });
+        res.json({ success: true, message: 'Trabajo encolado exitosamente.' });
+    } catch (err) {
+        console.error('Error encolando trabajo de prueba:', err);
+        res.status(500).json({ error: 'Error al procesar la cola.' });
+    }
+});
+
 // Fallback to static web client
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start Server
-app.listen(PORT, () => {
+// Start Server (using http server instance instead of express app directly)
+server.listen(PORT, () => {
     console.log(`======================================================================`);
     console.log(`   Servidor de SALESFLOW CRM corriendo en el puerto ${PORT}          `);
-    console.log(`   Modo: Producción Real (Sin simulaciones backend)                  `);
+    console.log(`   Modo: Producción Real (WebSocket & BullMQ Habilitados)             `);
+    console.log(`   Conexión Redis: ${queueManager.useRedis() ? 'ONLINE (BullMQ)' : 'OFFLINE (Fallback en Memoria)'} `);
     console.log(`======================================================================`);
 });
+

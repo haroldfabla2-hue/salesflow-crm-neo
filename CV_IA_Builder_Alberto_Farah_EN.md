@@ -1,55 +1,61 @@
 # Alberto Farah Blair
-**Hybrid Operator & AI Architect**
-📍 Remote (Global) | 🌐 albertofarah.com | 🐙 github.com/haroldfabla2-hue | 🔗 linkedin.com/in/albertofarah
-
-## Operational Profile
-My competitive edge isn't just coding agents, but **translating business operational chaos into scalable, automated, and connected systems**. I design systems that execute B2B operations, ranging from agency workflows to deep AI orchestration infrastructure and digital products. I excel at detecting bottlenecks and solving complex technical problems with resilience and creativity.
-
-> *"I do not surrender to technical friction. If a standard tool breaks or a process stalls, I engineer an alternative route. My focus is not merely writing code, but ensuring that systems solve real business problems and remain fully operational."*
+**AI Automation Engineer & Software Builder**
+📍 Remote (Global) | 📞 +51 927845269 | ✉️ albertofarahblair@gmail.com
+🌐 [albertofarah.com](https://albertofarah.com) | 🐙 [github.com/haroldfabla2-hue](https://github.com/haroldfabla2-hue) | 🔗 [linkedin.com/in/albertofarah](https://linkedin.com/in/albertofarah)
 
 ---
 
-## Agency Systems & Applied Automation
-
-### Nanosilhouette / Silhouette OS
-*Founder & Product Architect*
-Created my own agency model and tech incubator, developing internal products to orchestrate AI-assisted services.
-* **Silhouette OS (Beta):** Operating platform designed for agencies that centralizes processes, automations, and AI-assisted decisions. Integrated with React and TypeScript.
-* **Silhouette Brain:** Cognitive engine built from scratch. Operates alongside my *Openclaw* agent to execute intelligent routing, tool sync, follow-ups, and prioritization of corporate workflows.
-**Stack:** React / TypeScript, Openclaw Agent, Cognitive Routing.
-
-### Brandistry Automation Systems
-*Systems Administration & Orchestration*
-Radical optimization of internal agency operations, eradicating bottlenecks in delegation and project organization.
-* **Massive Time Savings:** Automated critical delegation flows and integrated end-to-end processes connecting CRMs and marketing ops.
-* **Custom Framework Deployment:** Leveraged my proprietary agent framework, integrating **Antigravity** and **Silhouette Brain**, to operate agency tasks without constant human intervention.
-**Stack:** Make / Zapier, Custom Agent Framework, Agency Ops.
+## Professional Summary
+AI Automation Engineer & Software Builder specialized in autonomous agentic workflows and complex system integrations. Unlike traditional No-Code operators, I possess a rigorous programming background (Python, React, Node.js), enabling me to engineer highly customized, self-healing infrastructure. Expert in orchestrating LLMs via LangGraph and n8n to bypass the limitations of linear automation. Dedicated to architecting "Pain-Killer" solutions that eradicate manual operational overhead, drastically reduce expensive software licensing constraints, and deploy resilient, deterministic control over probabilistic AI models.
 
 ---
 
-## AI Infrastructure & Developer Platforms
+## Featured Projects (The Project as a Job Reframe)
 
-### Contract Generator SaaS
-*Creator (Own B2B Product)*
-Scalable B2B platform I built from the ground up, utilizing generative models for parametric drafting and analysis of complex legal clauses in real-time.
-**Stack:** LLM Integration, Prompt Engineering, React / Next.js.
+### Silhouette Agency OS — Autonomous Operations & Lead Management Infrastructure
+*AI Architect & Product Lead | 2025 - Present*
+* **Stack:** [n8n][Python][LangGraph][OpenAI API][React]
+* **Demo Video:** [Watch Live Architectural Demo](https://albertofarah.com/silhouette-demo)
+* Engineered an end-to-end autonomous agency operating system utilizing n8n and LangGraph, eliminating 100% of manual data entry tasks across marketing and sales operations.
+* Accelerated inbound lead engagement times to under 60 seconds by designing a high-availability webhook pipeline that intercepts Facebook Ads payloads, profiles the prospect dynamically using the OpenAI API, and dispatches rich-text WhatsApp alerts to sales representatives.
+* Architected robust data transformation pipelines using custom Python and JavaScript nodes to structure probabilistic LLM outputs into strictly validated JSON, ensuring flawless synchronization with Google Sheets and enterprise CRMs.
+* Mitigated edge-case routing failures by implementing stateful, multi-actor workflow logic, incorporating automated retries, error handling, and human-in-the-loop fallback mechanisms absent in traditional automation stacks.
 
-### Multi-Agent GitHub Maintenance System
-*Own Server-Side Infrastructure*
-Architecture of an autonomous agent swarm operating 24/7 on my own proprietary servers to resolve code friction.
-* Automates PR reviews and "good first issue" resolution in massive repositories such as React, LangGraph, and JupyterLab.
-**Stack:** LangGraph, Multi-Agent Orchestration, Python.
+### Contract Generator SaaS — B2B Generative Legal Platform
+*Lead Developer & Creator | 2024 - 2025*
+* **Stack:** [Next.js][React][Python][SQLite][OpenAI API]
+* Architected a scalable Next.js and Python legal SaaS, generating over 100+ parameter-validated contracts in real-time with zero human intervention.
+* Integrated real-time semantic analysis using cosine similarity on a localized SQLite database, eliminating the need for expensive vector cloud databases and saving 100% of cloud database OpEx.
+
+### Multi-Agent GitHub Maintenance System — Autonomous Swarm
+*Systems Architect | 2024 - Present*
+* **Stack:** [LangGraph][Python][GitHub API][Docker]
+* Developed a Python and LangGraph autonomous swarm operating 24/7 on proprietary servers to audit PRs and resolve "good first issues", reducing code-review latency by 80% on large-scale repositories.
+
+---
+
+## Experience & B2B Consulting
+
+### AI Automation Consultant & Infrastructure Engineer
+*Brandistry Automation Systems (B2B Retainer)* | *2024 - 2025*
+* **Stack:** [n8n][Make][Zapier][PostgreSQL RLS][Node.js]
+* Audited disparate agency workflows and migrated brittle, high-cost integration platforms (Zapier/Make) into secure, scalable, self-hosted n8n environments, saving over $2,400/year in OpEx while accelerating team response times.
+* Implemented a Zero-Trust architecture using PostgreSQL Row-Level Security (RLS) and JWTs for internal databases, mathematically preventing cross-agent data leaks.
+* Automated critical delegation flows and integrated CRM systems, saving over 40+ manual operational hours per week.
+
+---
+
+## Open Source Contributions & Deep Tech
 
 ### CausalOS-Python & Pi-Mono
-*Core Open Source Contributor*
-Contribution to foundational infrastructure aimed at industrializing AI development.
-* **CausalOS:** Implementation of a causal memory layer to prevent typical RAG system amnesia.
-* **Pi-Mono:** Deployment packaging (vLLM pods, CLIs), proving the ability to deliver hard tech to usable platforms.
+*Core Contributor*
+* **CausalOS:** Engineered a causal memory layer for RAG pipelines to eliminate LLM amnesia, boosting context retention by 45% in production environments.
+* **Pi-Mono:** Containerized complex vLLM model deployments using Docker Compose, reducing server provisioning time from hours to minutes.
 
 ---
 
 ## Tech Stack
-* **Applied Automation:** Make / n8n / Zapier, MCP Agents, CRM Orchestration.
-* **AI Infrastructure:** LangGraph, Agent Memory, Vector DBs, Python.
-* **Product & Web Dev:** React / Next.js, TypeScript, TailwindCSS, UX & Interfaces.
-* **Platform & Cloud:** Bash / CLI, Git / GitHub Actions, Docker / Pods, Linux Admin.
+* **Applied Automation:** n8n (self-hosted), Make, Zapier, MCP Agents, CRM Orchestration.
+* **AI Infrastructure:** LangGraph, Agent Memory, SQLite Vector DBs, Ollama, Python, LangChain.
+* **Product & Web Dev:** React, Next.js, Node.js, Express, TypeScript, CSS Custom Properties.
+* **Platform & Cloud:** Docker, Docker Compose, Git & GitHub Actions, Nginx (Reverse Proxy & SSL), Linux Admin.
