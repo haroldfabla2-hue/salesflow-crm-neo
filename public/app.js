@@ -131,14 +131,25 @@ function initSocket() {
             console.log('🔌 Conectado al servidor WebSocket en tiempo real.');
         });
 
-        // Escuchar alertas de nuevos mensajes del servidor (Sprint 2)
-        state.socket.on('new_message_alert', (data) => {
-            showToast(`Mensaje entrante de ${data.from}: "${data.preview}"`, 'info');
+        // Escuchar cuando llega un mensaje de WhatsApp
+        state.socket.on('omni_message_received', (data) => {
+            showToast(`WhatsApp entrante de Lead: "${data.payload.text}"`, 'info');
+            
+            // Si el Drawer de chat está abierto y corresponde al Lead, recargar en vivo
+            if (activeChatLeadId === data.leadId) {
+                loadChatHistory(data.leadId);
+            }
+        });
+
+        // Escuchar cuando enviamos un mensaje de chat
+        state.socket.on('omni_message_sent', (data) => {
+            if (activeChatLeadId === data.leadId) {
+                loadChatHistory(data.leadId);
+            }
         });
 
         state.socket.on('connect_error', (err) => {
             console.error('Error de conexión WebSocket:', err.message);
-            showToast(`Error de conexión WebSocket: ${err.message}`, 'error');
         });
 
         state.socket.on('disconnect', () => {
@@ -247,9 +258,13 @@ async function handleDrop(e) {
 // ----------------------------------------------------------------------------
 // PROGRESSIVE DISCLOSURE (DRAWER)
 // ----------------------------------------------------------------------------
+let activeChatLeadId = null;
+
 function openLeadDrawer(leadId) {
     const lead = state.leads.find(l => l.id === leadId);
     if (!lead) return;
+
+    activeChatLeadId = leadId;
 
     const overlay = document.getElementById('drawer-overlay');
     const drawer = document.getElementById('detail-drawer');
@@ -270,27 +285,35 @@ function openLeadDrawer(leadId) {
         </div>
     `;
 
-    setTimeout(() => {
+    setTimeout(async () => {
         content.innerHTML = `
             <div class="detail-group">
                 <span class="detail-label">Status</span>
                 <span class="badge badge-blue" style="width: max-content;">${lead.status.toUpperCase()}</span>
             </div>
             <div class="detail-group">
-                <span class="detail-label">Email Address</span>
-                <div class="detail-value">${lead.email}</div>
-            </div>
-            <div class="detail-group">
                 <span class="detail-label">Phone Number</span>
                 <div class="detail-value">${lead.phone}</div>
             </div>
             <div class="detail-group">
-                <span class="detail-label">Created At</span>
-                <div class="detail-value">${lead.date}</div>
-            </div>
-            <div class="detail-group">
                 <span class="detail-label">Agent (Owner)</span>
                 <div class="detail-value">${lead.agentName}</div>
+            </div>
+
+            <!-- SECCIÓN OMNICANAL DE CHAT EN TIEMPO REAL -->
+            <div class="chat-section">
+                <div class="chat-header">
+                    <i data-feather="message-circle"></i> WhatsApp Real-Time Chat
+                </div>
+                <div class="chat-history" id="chat-history">
+                    <div style="text-align: center; color: var(--text-tertiary); font-size: 0.8rem; padding-top: 2rem;">
+                        Loading chat history...
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" id="chat-message-input" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendChatMessage()">
+                    <button id="btn-send-chat" onclick="sendChatMessage()"><i data-feather="send" style="width: 16px; height: 16px;"></i></button>
+                </div>
             </div>
         `;
         
@@ -298,11 +321,72 @@ function openLeadDrawer(leadId) {
             <button class="btn btn-secondary" onclick="closeDrawer()">Cancel</button>
             <button class="btn btn-primary"><i data-feather="edit-2" style="width:14px;height:14px;"></i> Edit Lead</button>
         `;
+        
         feather.replace();
+
+        // Cargar historial de chat
+        await loadChatHistory(leadId);
     }, 300); // Simulate network fetch for deep details
 }
 
+async function loadChatHistory(leadId) {
+    try {
+        const messages = await apiCall(`/api/chats/${leadId}/messages`);
+        const historyContainer = document.getElementById('chat-history');
+        if (!historyContainer) return;
+
+        if (messages.length === 0) {
+            historyContainer.innerHTML = `
+                <div style="text-align: center; color: var(--text-tertiary); font-size: 0.8rem; padding-top: 3rem;">
+                    No messages in this chat.
+                </div>
+            `;
+            return;
+        }
+
+        historyContainer.innerHTML = messages.map(msg => {
+            const isUser = msg.senderType === 'user';
+            const timeStr = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="chat-bubble ${isUser ? 'bubble-user' : 'bubble-contact'}">
+                    ${escapeHtml(msg.payload.text)}
+                    <div class="chat-time">${timeStr}</div>
+                </div>
+            `;
+        }).join('');
+        
+        historyContainer.scrollTop = historyContainer.scrollHeight;
+    } catch (err) {
+        console.error('Error loading chat:', err);
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chat-message-input');
+    const text = input.value.trim();
+    if (!text || !activeChatLeadId) return;
+
+    input.value = '';
+
+    try {
+        await apiCall(`/api/chats/${activeChatLeadId}/messages`, 'POST', { message: text });
+    } catch (err) {
+        showToast('Error sending message', 'danger');
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 function closeDrawer() {
+    activeChatLeadId = null;
     document.getElementById('drawer-overlay').classList.remove('active');
     document.getElementById('detail-drawer').classList.remove('open');
 }

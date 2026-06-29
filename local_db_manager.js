@@ -21,14 +21,26 @@ class LocalDbManager {
             consent_logs: [],
             leads: [],
             calls_and_interactions: [],
-            audit_logs: []
+            audit_logs: [],
+            omni_conversations: [],
+            omni_messages: []
         };
     }
 
     async init() {
         if (fs.existsSync(DB_FILE)) {
             try {
-                this.data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+                const loaded = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+                this.data = {
+                    settings: loaded.settings || [],
+                    users: loaded.users || [],
+                    consent_logs: loaded.consent_logs || [],
+                    leads: loaded.leads || [],
+                    calls_and_interactions: loaded.calls_and_interactions || [],
+                    audit_logs: loaded.audit_logs || [],
+                    omni_conversations: loaded.omni_conversations || [],
+                    omni_messages: loaded.omni_messages || []
+                };
                 console.log('✅ Base de datos local cargada desde salesflow_local.json');
                 return;
             } catch (e) {
@@ -239,9 +251,16 @@ class LocalDbManager {
             return { rows: [newCall] };
         }
 
-        // 10. SELECT leads (simple count for metrics)
-        if (sql === 'select status from leads') {
-            return { rows: this.data.leads.map(l => ({ status: l.status })) };
+        // 10. SELECT leads (generic query mapper)
+        if (sql.includes('from leads') && !sql.includes('from leads l')) {
+            if (sql.includes('where id = $1')) {
+                const lead = this.data.leads.find(l => l.id === params[0]);
+                return { rows: lead ? [lead] : [] };
+            }
+            if (sql === 'select status from leads') {
+                return { rows: this.data.leads.map(l => ({ status: l.status })) };
+            }
+            return { rows: this.data.leads };
         }
 
         // 11. ARCO procedure simulator
@@ -280,6 +299,70 @@ class LocalDbManager {
                 return { rows: [{ success: true }] };
             }
             return { rows: [{ success: false }] };
+        }
+
+        // 12. SELECT FROM omni_conversations
+        if (sql.includes('from omni_conversations')) {
+            if (sql.includes('where lead_id = $1')) {
+                const convs = this.data.omni_conversations.filter(c => c.lead_id === params[0]);
+                return { rows: convs };
+            }
+            if (sql.includes('where id = $1')) {
+                const convs = this.data.omni_conversations.filter(c => c.id === params[0]);
+                return { rows: convs };
+            }
+            return { rows: this.data.omni_conversations };
+        }
+
+        // 13. SELECT FROM omni_messages
+        if (sql.includes('from omni_messages')) {
+            if (sql.includes('where conversation_id = $1')) {
+                const msgs = this.data.omni_messages.filter(m => m.conversation_id === params[0]);
+                msgs.sort((a, b) => a.id.localeCompare(b.id));
+                return { rows: msgs };
+            }
+            return { rows: this.data.omni_messages };
+        }
+
+        // 14. INSERT INTO omni_conversations
+        if (sql.startsWith('insert into omni_conversations')) {
+            const newConv = {
+                id: params[0],
+                lead_id: params[1],
+                channel_type: params[2] || 'whatsapp',
+                is_active: true,
+                last_message_at: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            };
+            this.data.omni_conversations.push(newConv);
+            this.save();
+            return { rows: [newConv] };
+        }
+
+        // 15. INSERT INTO omni_messages
+        if (sql.startsWith('insert into omni_messages')) {
+            const newMsg = {
+                id: params[0],
+                conversation_id: params[1],
+                sender_type: params[2],
+                payload: typeof params[3] === 'string' ? JSON.parse(params[3]) : params[3],
+                delivery_status: params[4] || 'sent',
+                created_at: new Date().toISOString()
+            };
+            this.data.omni_messages.push(newMsg);
+            this.save();
+            return { rows: [newMsg] };
+        }
+
+        // 16. UPDATE omni_conversations
+        if (sql.startsWith('update omni_conversations')) {
+            const conv = this.data.omni_conversations.find(c => c.id === params[1]);
+            if (conv) {
+                conv.last_message_at = params[0] || new Date().toISOString();
+                this.save();
+                return { rows: [conv] };
+            }
+            return { rows: [] };
         }
 
         return { rows: [] };
@@ -333,6 +416,49 @@ class LocalDbManager {
                 return { rows: [lead] };
             }
             return { rows: [] };
+        }
+
+        // SELECT FROM omni_conversations with RLS simulation inherited from leads
+        if (sql.includes('from omni_conversations')) {
+            let allowedLeadIds = [];
+            if (session.role === 'sales_agent') {
+                allowedLeadIds = this.data.leads.filter(l => l.assigned_agent_id === session.id).map(l => l.id);
+            } else if (session.role === 'team_leader') {
+                const teamAgentIds = this.data.users.filter(u => u.team_id === 'team-sales').map(u => u.id);
+                allowedLeadIds = this.data.leads.filter(l => teamAgentIds.includes(l.assigned_agent_id)).map(l => l.id);
+            } else {
+                allowedLeadIds = this.data.leads.map(l => l.id); // Directors & QA see all
+            }
+
+            let filteredConvs = this.data.omni_conversations.filter(c => allowedLeadIds.includes(c.lead_id));
+            if (sql.includes('where lead_id = $1')) {
+                filteredConvs = filteredConvs.filter(c => c.lead_id === params[0]);
+            }
+            if (sql.includes('where id = $1')) {
+                filteredConvs = filteredConvs.filter(c => c.id === params[0]);
+            }
+            return { rows: filteredConvs };
+        }
+
+        // SELECT FROM omni_messages with RLS simulation inherited from conversations
+        if (sql.includes('from omni_messages')) {
+            let allowedLeadIds = [];
+            if (session.role === 'sales_agent') {
+                allowedLeadIds = this.data.leads.filter(l => l.assigned_agent_id === session.id).map(l => l.id);
+            } else if (session.role === 'team_leader') {
+                const teamAgentIds = this.data.users.filter(u => u.team_id === 'team-sales').map(u => u.id);
+                allowedLeadIds = this.data.leads.filter(l => teamAgentIds.includes(l.assigned_agent_id)).map(l => l.id);
+            } else {
+                allowedLeadIds = this.data.leads.map(l => l.id);
+            }
+            const allowedConvIds = this.data.omni_conversations.filter(c => allowedLeadIds.includes(c.lead_id)).map(c => c.id);
+
+            let filteredMsgs = this.data.omni_messages.filter(m => allowedConvIds.includes(m.conversation_id));
+            if (sql.includes('where conversation_id = $1')) {
+                filteredMsgs = filteredMsgs.filter(m => m.conversation_id === params[0]);
+            }
+            filteredMsgs.sort((a, b) => a.id.localeCompare(b.id));
+            return { rows: filteredMsgs };
         }
 
         return this.query(text, params);

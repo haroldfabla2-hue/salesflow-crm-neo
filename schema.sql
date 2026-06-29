@@ -200,3 +200,56 @@ CREATE POLICY policy_leads_rbac_access ON leads
             SELECT id FROM users WHERE team_id = (SELECT team_id FROM users WHERE id = current_user_id_setting())
         ))
     );
+
+-- ============================================================================
+-- 8. OMNICHANNEL CHAT SCHEMA
+-- ============================================================================
+
+CREATE TYPE omni_channel_type AS ENUM ('whatsapp', 'sms', 'web');
+CREATE TYPE omni_message_sender AS ENUM ('user', 'contact', 'system');
+CREATE TYPE omni_delivery_status AS ENUM ('sent', 'delivered', 'read', 'failed');
+
+CREATE TABLE IF NOT EXISTS omni_conversations (
+    id UUID PRIMARY KEY, -- Generado como UUIDv7 en Node.js
+    lead_id UUID NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
+    channel_type omni_channel_type NOT NULL DEFAULT 'whatsapp',
+    is_active BOOLEAN DEFAULT TRUE,
+    last_message_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS omni_messages (
+    id UUID PRIMARY KEY, -- Generado como UUIDv7 en Node.js
+    conversation_id UUID NOT NULL REFERENCES omni_conversations(id) ON DELETE CASCADE,
+    sender_type omni_message_sender NOT NULL,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb, -- Contiene {"text": "..."} o multimedia urls
+    delivery_status omni_delivery_status NOT NULL DEFAULT 'sent',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índices B-Tree compuestos para optimizar listado de hilos y paginación secuencial por UUIDv7
+CREATE INDEX IF NOT EXISTS idx_omni_conversations_lead ON omni_conversations(lead_id);
+CREATE INDEX IF NOT EXISTS idx_omni_messages_conv_id ON omni_messages(conversation_id, id DESC);
+
+-- Habilitar RLS en tablas Omnicanal
+ALTER TABLE omni_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE omni_messages ENABLE ROW LEVEL SECURITY;
+
+-- Políticas de RLS heredadas automáticamente de Leads
+CREATE POLICY policy_omni_conversations_rbac ON omni_conversations
+    FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM leads WHERE leads.id = omni_conversations.lead_id
+        )
+    );
+
+CREATE POLICY policy_omni_messages_rbac ON omni_messages
+    FOR ALL
+    USING (
+        EXISTS (
+            SELECT 1 FROM omni_conversations 
+            WHERE omni_conversations.id = omni_messages.conversation_id
+        )
+    );
+

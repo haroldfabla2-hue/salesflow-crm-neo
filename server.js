@@ -13,6 +13,7 @@ const bcrypt = require('bcryptjs');
 const db = require('./db');
 const cryptoUtil = require('./crypto_util');
 const ingestionUtil = require('./ingestion_util');
+const { uuidv7 } = require('uuidv7');
 
 require('dotenv').config();
 
@@ -20,7 +21,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_sign_key_change_in_production_2026';
 
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ----------------------------------------------------------------------------
@@ -522,32 +527,289 @@ io.on('connection', (socket) => {
     });
 });
 
-// Importar el gestor de colas y configurar un Worker de pruebas
+// Importar el gestor de colas y configurar un Worker de WhatsApp real con UUIDv7
 const queueManager = require('./queue');
 
+// Helper para encontrar o crear un Lead basado en su teléfono
+async function getLeadIdByPhone(phone, senderName) {
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    // Buscar en la base de datos
+    const leadsRes = await db.query('SELECT id, encrypted_phone FROM leads');
+    for (const lead of leadsRes.rows) {
+        try {
+            const rawPhone = cryptoUtil.decrypt(lead.encrypted_phone).replace(/\D/g, '');
+            if (rawPhone === cleanPhone) {
+                return lead.id;
+            }
+        } catch (e) {
+            // Decrypt fallido (lead sin datos o llave corrupta)
+        }
+    }
+
+    // Auto-creación de Lead (Cumplimiento tácito Ley 29733 por contacto inicial del prospecto)
+    console.log(`[Auto-Create] Creando lead para número: ${phone}`);
+    const encEmail = cryptoUtil.encrypt('no-email@whatsapp.com');
+    const encPhone = cryptoUtil.encrypt(phone);
+
+    const consentRes = await db.query(
+        `INSERT INTO consent_logs (ip_address, device_id, terms_version_hash) 
+         VALUES ($1, $2, $3) RETURNING id`,
+        ['0.0.0.0', 'WhatsApp Webhook Auto-Create', 'terms_v1_salesflow_active']
+    );
+    const consentId = consentRes.rows[0].id;
+
+    const newLeadRes = await db.query(
+        `INSERT INTO leads (first_name, last_name, encrypted_email, encrypted_phone, status, consent_log_id) 
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [senderName || 'Prospecto de WhatsApp', 'Auto-Ingest', encEmail, encPhone, 'new', consentId]
+    );
+
+    return newLeadRes.rows[0].id;
+}
+
 queueManager.registerWorker('whatsapp_ingestion_queue', async (job) => {
-    console.log(`[Worker Ingesta] Procesando mensaje entrante de: ${job.data.from}`);
-    // Aquí implementaremos el parseo real y WebSockets en el Sprint 2
-    
-    // Emitir confirmación en tiempo real al rol de ventas
-    io.to('role:sales_agent').to('role:director').emit('new_message_alert', {
-        from: job.data.from,
-        preview: job.data.message
-    });
+    let fromPhone, messageText, senderName;
+
+    // Evaluar si es payload oficial de Meta o simulación/test
+    const value = job.data?.entry?.[0]?.changes?.[0]?.value;
+    if (value && value.messages) {
+        const message = value.messages[0];
+        const contact = value.contacts?.[0];
+        fromPhone = message.from;
+        messageText = message.text?.body || '[Mensaje multimedia no soportado]';
+        senderName = contact?.profile?.name;
+    } else {
+        // Payload de prueba local
+        fromPhone = job.data.from || '+51999999999';
+        messageText = job.data.message || 'Mensaje de prueba vacío.';
+        senderName = 'Usuario de Pruebas';
+    }
+
+    try {
+        const leadId = await getLeadIdByPhone(fromPhone, senderName);
+
+        // 1. Encontrar o crear la conversación
+        let convId;
+        const convRes = await db.query(
+            'SELECT id FROM omni_conversations WHERE lead_id = $1 AND channel_type = $2 AND is_active = true',
+            [leadId, 'whatsapp']
+        );
+
+        if (convRes.rows.length > 0) {
+            convId = convRes.rows[0].id;
+            await db.query(
+                'UPDATE omni_conversations SET last_message_at = CURRENT_TIMESTAMP WHERE id = $1',
+                [convId]
+            );
+        } else {
+            convId = uuidv7();
+            await db.query(
+                'INSERT INTO omni_conversations (id, lead_id, channel_type) VALUES ($1, $2, $3)',
+                [convId, leadId, 'whatsapp']
+            );
+        }
+
+        // 2. Guardar el mensaje (UUIDv7 para orden secuencial)
+        const messageId = uuidv7();
+        const payload = { text: messageText };
+        await db.query(
+            'INSERT INTO omni_messages (id, conversation_id, sender_type, payload, delivery_status) VALUES ($1, $2, $3, $4, $5)',
+            [messageId, convId, 'contact', JSON.stringify(payload), 'delivered']
+        );
+
+        // 3. Emitir por Socket en tiempo real a asesores y directores
+        const leadAgentRes = await db.query('SELECT assigned_agent_id FROM leads WHERE id = $1', [leadId]);
+        const agentId = leadAgentRes.rows[0]?.assigned_agent_id;
+
+        const broadcastPayload = {
+            id: messageId,
+            conversationId: convId,
+            leadId: leadId,
+            senderType: 'contact',
+            payload: payload,
+            createdAt: new Date().toISOString()
+        };
+
+        if (agentId) {
+            io.to(`user:${agentId}`).emit('omni_message_received', broadcastPayload);
+        }
+        io.to('role:director').emit('omni_message_received', broadcastPayload);
+        io.to('role:team_leader').emit('omni_message_received', broadcastPayload);
+
+        console.log(`[Worker Ingesta] Mensaje de WhatsApp procesado y propagado: ${fromPhone} -> Lead ${leadId}`);
+
+    } catch (err) {
+        console.error('[Worker Ingesta] Error al procesar mensaje en la cola:', err);
+        throw err;
+    }
 });
 
-// Ruta de prueba para verificar el funcionamiento de las colas y WebSockets
+// ----------------------------------------------------------------------------
+// ROUTES: WHATSAPP WEBHOOKS (META INTEGRATION)
+// ----------------------------------------------------------------------------
+
+app.get('/api/webhooks/whatsapp', (req, res) => {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+    const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN || 'salesflow_webhook_verify_token_2026';
+
+    if (mode && token) {
+        if (mode === 'subscribe' && token === verifyToken) {
+            console.log('✅ Webhook verificado correctamente por Meta.');
+            return res.status(200).send(challenge);
+        } else {
+            return res.status(403).send('Token de verificación inválido.');
+        }
+    }
+    return res.status(400).send('Faltan parámetros de verificación.');
+});
+
+app.post('/api/webhooks/whatsapp', async (req, res) => {
+    const signature = req.headers['x-hub-signature-256'];
+    const rawBody = req.rawBody;
+
+    // Verificar firma criptográfica HMAC
+    if (!cryptoUtil.verifySignature(rawBody, signature)) {
+        console.warn('❌ Firma HMAC de Webhook de WhatsApp inválida.');
+        return res.status(401).json({ error: 'Firma inválida' });
+    }
+
+    const payload = req.body;
+    
+    // Ingesta rápida en cola para cumplir con <5ms de respuesta
+    try {
+        await queueManager.addJob('whatsapp_ingestion_queue', 'whatsapp_message_received', payload);
+        res.status(200).send('EVENT_RECEIVED');
+    } catch (err) {
+        console.error('Error metiendo webhook a la cola:', err);
+        res.status(500).send('SERVER_ERROR');
+    }
+});
+
+// Ruta de prueba local heredada
 app.post('/api/test-queue', authenticateToken, async (req, res) => {
     const { from, message } = req.body;
     try {
         await queueManager.addJob('whatsapp_ingestion_queue', 'test_message_job', {
-            from: from || 'Sistema de Pruebas',
+            from: from || '+51999888777',
             message: message || '¡Hola! Este es un mensaje asíncrono.'
         });
         res.json({ success: true, message: 'Trabajo encolado exitosamente.' });
     } catch (err) {
         console.error('Error encolando trabajo de prueba:', err);
         res.status(500).json({ error: 'Error al procesar la cola.' });
+    }
+});
+
+// ----------------------------------------------------------------------------
+// ROUTES: OMNICHANNEL CHATS
+// ----------------------------------------------------------------------------
+
+app.get('/api/chats/:leadId/messages', authenticateToken, async (req, res) => {
+    const { leadId } = req.params;
+    try {
+        // Encontrar la conversación activa con RLS
+        const convRes = await db.queryWithSession(
+            'SELECT id FROM omni_conversations WHERE lead_id = $1 AND channel_type = $2 AND is_active = true',
+            [leadId, 'whatsapp'],
+            req.user
+        );
+
+        if (convRes.rows.length === 0) {
+            return res.json([]);
+        }
+
+        const convId = convRes.rows[0].id;
+
+        // Obtener historial de mensajes con RLS
+        const msgsRes = await db.queryWithSession(
+            'SELECT id, sender_type, payload, delivery_status, created_at FROM omni_messages WHERE conversation_id = $1 ORDER BY id ASC',
+            [convId],
+            req.user
+        );
+
+        const messages = msgsRes.rows.map(m => ({
+            id: m.id,
+            senderType: m.sender_type,
+            payload: m.payload,
+            status: m.delivery_status,
+            createdAt: m.created_at
+        }));
+
+        res.json(messages);
+    } catch (err) {
+        console.error('Error obteniendo mensajes:', err);
+        res.status(500).json({ error: 'Error al obtener historial o RLS bloqueó el acceso.' });
+    }
+});
+
+app.post('/api/chats/:leadId/messages', authenticateToken, async (req, res) => {
+    const { leadId } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ error: 'El contenido del mensaje es obligatorio.' });
+    }
+
+    try {
+        // Buscar o crear conversación con RLS
+        let convId;
+        const convRes = await db.queryWithSession(
+            'SELECT id FROM omni_conversations WHERE lead_id = $1 AND channel_type = $2 AND is_active = true',
+            [leadId, 'whatsapp'],
+            req.user
+        );
+
+        if (convRes.rows.length > 0) {
+            convId = convRes.rows[0].id;
+            await db.query(
+                'UPDATE omni_conversations SET last_message_at = CURRENT_TIMESTAMP WHERE id = $1',
+                [convId]
+            );
+        } else {
+            // Verificar primero si el lead existe y el RLS nos permite acceder
+            const leadCheck = await db.queryWithSession('SELECT id FROM leads WHERE id = $1', [leadId], req.user);
+            if (leadCheck.rows.length === 0) {
+                return res.status(403).json({ error: 'Acceso denegado al Lead por RLS.' });
+            }
+
+            convId = uuidv7();
+            await db.query(
+                'INSERT INTO omni_conversations (id, lead_id, channel_type) VALUES ($1, $2, $3)',
+                [convId, leadId, 'whatsapp']
+            );
+        }
+
+        const messageId = uuidv7();
+        const payload = { text: message };
+
+        // Guardar mensaje saliente del usuario
+        await db.query(
+            'INSERT INTO omni_messages (id, conversation_id, sender_type, payload, delivery_status) VALUES ($1, $2, $3, $4, $5)',
+            [messageId, convId, 'user', JSON.stringify(payload), 'sent']
+        );
+
+        const broadcastPayload = {
+            id: messageId,
+            conversationId: convId,
+            leadId: leadId,
+            senderType: 'user',
+            payload: payload,
+            createdAt: new Date().toISOString()
+        };
+
+        // Propagar por socket a las salas autorizadas
+        io.to(`user:${req.user.id}`).emit('omni_message_sent', broadcastPayload);
+        io.to('role:director').emit('omni_message_sent', broadcastPayload);
+        io.to('role:team_leader').emit('omni_message_sent', broadcastPayload);
+
+        // Simulamos envío inmediato
+        res.status(201).json(broadcastPayload);
+    } catch (err) {
+        console.error('Error enviando mensaje:', err);
+        res.status(500).json({ error: 'Error al enviar mensaje o RLS bloqueó el acceso.' });
     }
 });
 

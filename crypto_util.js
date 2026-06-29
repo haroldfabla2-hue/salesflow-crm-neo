@@ -143,8 +143,44 @@ function maskData(decryptedText, type) {
     return '*****';
 }
 
+/**
+ * Verifies the X-Hub-Signature-256 signature sent by Meta (WhatsApp).
+ * @param {string|Buffer} rawPayload The raw body of the request.
+ * @param {string} signatureHeader The X-Hub-Signature-256 header.
+ * @returns {boolean} True if signature is valid.
+ */
+function verifySignature(rawPayload, signatureHeader) {
+    const appSecret = process.env.WHATSAPP_APP_SECRET;
+    // Si no está configurado, actuamos en modo bypass para pruebas locales
+    if (!appSecret) {
+        return true;
+    }
+    if (!signatureHeader) return false;
+
+    const parts = signatureHeader.split('=');
+    if (parts.length !== 2 || parts[0] !== 'sha256') return false;
+
+    const signature = parts[1];
+    const expectedSignature = crypto
+        .createHmac('sha256', appSecret)
+        .update(rawPayload)
+        .digest('hex');
+
+    // Comparación en tiempo constante para evitar ataques de temporización
+    try {
+        return crypto.timingSafeEqual(
+            Buffer.from(signature, 'hex'), 
+            Buffer.from(expectedSignature, 'hex')
+        );
+    } catch (e) {
+        return false;
+    }
+}
+
 module.exports = {
     encrypt,
     decrypt,
-    maskData
+    maskData,
+    verifySignature
 };
+

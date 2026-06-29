@@ -68,7 +68,7 @@ async function setup() {
 
         // 2. Clear existing records to ensure clean slate
         console.log('Limpiando registros antiguos...');
-        await db.query('TRUNCATE settings, users, consent_logs, leads, calls_and_interactions, audit_logs CASCADE');
+        await db.query('TRUNCATE settings, users, consent_logs, leads, calls_and_interactions, audit_logs, omni_conversations, omni_messages CASCADE');
 
         // 3. Insert Settings (Tenant)
         console.log('Insertando configuración de empresa (Ideas Campus)...');
