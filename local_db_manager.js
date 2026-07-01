@@ -125,16 +125,48 @@ class LocalDbManager {
 
         // 2. INSERT INTO audit_logs (Immutable logs)
         if (sql.startsWith('insert into audit_logs')) {
-            const newLog = {
-                id: this.data.audit_logs.length + 101,
-                actor_user_id: params[0],
-                action: params[1],
-                target_entity: params[2],
-                target_id: params[3],
-                ip_address: params[4],
-                delta_state: typeof params[5] === 'string' ? JSON.parse(params[5]) : params[5],
-                created_at: new Date()
-            };
+            let newLog;
+            if (params.length === 6) {
+                let deltaState = params[4];
+                if (typeof deltaState === 'string') {
+                    try {
+                        deltaState = JSON.parse(deltaState);
+                    } catch (e) {
+                        // Ignorar y mantener como string original si no es JSON válido
+                    }
+                }
+                // New audit log format: [id, operator_email, action, target_table, delta, created_at]
+                newLog = {
+                    id: params[0],
+                    actor_user_id: params[1],
+                    action: params[2],
+                    target_entity: params[3],
+                    target_id: params[0],
+                    ip_address: '127.0.0.1',
+                    delta_state: deltaState,
+                    created_at: new Date(params[5])
+                };
+            } else {
+                let deltaState = params[5];
+                if (typeof deltaState === 'string') {
+                    try {
+                        deltaState = JSON.parse(deltaState);
+                    } catch (e) {
+                        // Ignorar
+                    }
+                }
+                // Old audit log format
+                newLog = {
+                    id: this.data.audit_logs.length + 101,
+                    actor_user_id: params[0],
+                    action: params[1],
+                    target_entity: params[2],
+                    target_id: params[3],
+                    ip_address: params[4],
+                    delta_state: deltaState,
+                    created_at: new Date()
+                };
+            }
             this.data.audit_logs.unshift(newLog);
             this.save();
             return { rows: [newLog] };
@@ -218,6 +250,15 @@ class LocalDbManager {
                 };
             });
             return { rows: calls };
+        }
+
+        // SELECT c.* FROM calls_and_interactions (single fetch)
+        if (sql.includes('from calls_and_interactions') && !sql.startsWith('select c.id, c.lead_id')) {
+            if (sql.includes('where id = $1')) {
+                const call = this.data.calls_and_interactions.find(c => c.id === params[0]);
+                return { rows: call ? [call] : [] };
+            }
+            return { rows: this.data.calls_and_interactions };
         }
 
         // 8. UPDATE calls_and_interactions

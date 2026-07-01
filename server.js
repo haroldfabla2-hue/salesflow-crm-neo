@@ -10,6 +10,7 @@ const express = require('express');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const https = require('https');
 const db = require('./db');
 const cryptoUtil = require('./crypto_util');
 const ingestionUtil = require('./ingestion_util');
@@ -324,6 +325,7 @@ app.get('/api/interactions', authenticateToken, requireRole(['director', 'qa_aud
 
         const calls = callsRes.rows.map(c => ({
             id: c.id,
+            leadId: c.lead_id,
             leadName: `${c.first_name} ${c.last_name}`,
             agentName: c.agent_name,
             duration: c.duration_seconds,
@@ -443,7 +445,7 @@ app.get('/api/audit-logs', authenticateToken, requireRole(['director']), async (
             action: l.action,
             target: `${l.target_entity} [${l.target_id || 'N/A'}]`,
             ip: l.ip_address || '0.0.0.0',
-            date: l.created_at.toTimeString().split(' ')[0],
+            date: new Date(l.created_at).toTimeString().split(' ')[0],
             delta: l.delta_state ? JSON.stringify(l.delta_state) : 'Sin detalles'
         }));
 
@@ -643,6 +645,179 @@ queueManager.registerWorker('whatsapp_ingestion_queue', async (job) => {
     } catch (err) {
         console.error('[Worker Ingesta] Error al procesar mensaje en la cola:', err);
         throw err;
+    }
+});
+
+// Helper para llamadas directas HTTPS a Claude 3.5 Sonnet sin dependencias adicionales
+function callClaude35(prompt, apiKey) {
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 1024,
+            messages: [{ role: "user", content: prompt }]
+        });
+
+        const req = https.request({
+            hostname: 'api.anthropic.com',
+            port: 443,
+            path: '/v1/messages',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'Content-Length': Buffer.byteLength(data)
+            }
+        }, (res) => {
+            let body = '';
+            res.on('data', chunk => body += chunk);
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    try {
+                        const parsed = JSON.parse(body);
+                        resolve(parsed.content[0].text);
+                    } catch (e) {
+                        reject(new Error('Failed to parse Claude JSON response'));
+                    }
+                } else {
+                    reject(new Error(`Claude API returned HTTP ${res.statusCode}: ${body}`));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(data);
+        req.end();
+    });
+}
+
+queueManager.registerWorker('ai_qa_evaluation_queue', async (job) => {
+    const { callId } = job.data;
+    console.log(`[QA Worker] Evaluando llamada: ${callId}`);
+
+    try {
+        const callRes = await db.query('SELECT * FROM calls_and_interactions WHERE id = $1', [callId]);
+        if (callRes.rows.length === 0) {
+            console.error(`[QA Worker] No se encontró la llamada: ${callId}`);
+            return;
+        }
+
+        const call = callRes.rows[0];
+        const transcript = call.transcript_text || '';
+
+        let qaScore = 80;
+        let evaluationDetails = {
+            ley29733_compliant: true,
+            greeting_check: true,
+            product_explanation: true,
+            observations: 'Llamada comercial evaluada (Simulación NLP).'
+        };
+
+        const prompt = `Eres un Auditor de Calidad y Cumplimiento Legal (Ley 29733 de Protección de Datos Personales del Perú).
+Analiza la siguiente transcripción de llamada de ventas y evalúa:
+1. ¿El agente solicitó consentimiento explícito para tratar/grabar los datos personales (Cumple Ley 29733)? (Responder true/false).
+2. ¿Hubo saludo formal? (Responder true/false).
+3. ¿Explicó correctamente el producto/beneficios? (Responder true/false).
+4. Asigna un score de calidad de 0 a 100 basado en el desempeño comercial.
+
+Devuelve únicamente un objeto JSON con las siguientes llaves:
+{
+  "ley29733_compliant": boolean,
+  "greeting_check": boolean,
+  "product_explanation": boolean,
+  "score": number,
+  "observations": "resumen muy breve de la evaluación"
+}
+
+Transcripción:
+"${transcript}"`;
+
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (apiKey) {
+            try {
+                const claudeResponse = await callClaude35(prompt, apiKey);
+                const parsed = JSON.parse(claudeResponse);
+                qaScore = parsed.score || 70;
+                evaluationDetails = {
+                    ley29733_compliant: parsed.ley29733_compliant,
+                    greeting_check: parsed.greeting_check,
+                    product_explanation: parsed.product_explanation,
+                    observations: parsed.observations
+                };
+            } catch (err) {
+                console.error('[QA Worker] Error llamando a Claude, usando fallback NLP:', err.message);
+                runNlpHeuristics();
+            }
+        } else {
+            runNlpHeuristics();
+        }
+
+        function runNlpHeuristics() {
+            const lowerTranscript = transcript.toLowerCase();
+            const hasConsentMention = lowerTranscript.includes('datos') || lowerTranscript.includes('grabar') || lowerTranscript.includes('consentimiento') || lowerTranscript.includes('29733') || lowerTranscript.includes('autoriza');
+            const hasGreeting = lowerTranscript.includes('hola') || lowerTranscript.includes('buenas') || lowerTranscript.includes('buenos') || lowerTranscript.includes('saludos');
+            const hasValueOffer = lowerTranscript.includes('curso') || lowerTranscript.includes('especializac') || lowerTranscript.includes('marketing') || lowerTranscript.includes('venta') || lowerTranscript.includes('programa');
+
+            evaluationDetails.ley29733_compliant = hasConsentMention;
+            evaluationDetails.greeting_check = hasGreeting;
+            evaluationDetails.product_explanation = hasValueOffer;
+
+            let calculatedScore = 50;
+            if (hasGreeting) calculatedScore += 15;
+            if (hasValueOffer) calculatedScore += 20;
+            if (hasConsentMention) calculatedScore += 15;
+
+            if (!hasConsentMention) {
+                calculatedScore = Math.max(0, calculatedScore - 30);
+                evaluationDetails.observations = 'ALERTA CRÍTICA: El asesor no solicitó consentimiento explícito de protección de datos (Ley 29733).';
+            } else {
+                evaluationDetails.observations = 'Llamada cumple con la Ley 29733. Se ofreció el producto de forma adecuada.';
+            }
+            qaScore = calculatedScore;
+        }
+
+        // Actualizar base de datos
+        await db.query(
+            `UPDATE calls_and_interactions 
+             SET qa_score = $1, qa_evaluation_details = $2 
+             WHERE id = $3`,
+            [qaScore, JSON.stringify(evaluationDetails), callId]
+        );
+
+        // Crear alerta crítica si hay violaciones o bajo puntaje
+        if (!evaluationDetails.ley29733_compliant || qaScore < 70) {
+            const warningMsg = !evaluationDetails.ley29733_compliant 
+                ? `VIOLACIÓN LEY 29733: Llamada ${callId} grabada sin consentimiento de datos.`
+                : `DESEMPEÑO CRÍTICO EN LLAMADA: Llamada ${callId} obtuvo score de ${qaScore}`;
+
+            console.warn(`[QA Alarma] 🚨 ${warningMsg}`);
+
+            // Insertar bitácora de auditoría inmutable
+            await db.query(
+                `INSERT INTO audit_logs (id, operator_email, action, target_table, delta, created_at) 
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [
+                    uuidv7(),
+                    'ai-auditor@salesflow.pe',
+                    'CRITICAL_QA_ALERT',
+                    'calls_and_interactions',
+                    JSON.stringify({ callId, qaScore, ...evaluationDetails }),
+                    new Date().toISOString()
+                ]
+            );
+
+            // Propagar alerta en tiempo real
+            io.to('role:director').emit('critical_qa_alert', {
+                callId,
+                leadId: call.lead_id,
+                qaScore,
+                message: warningMsg
+            });
+        }
+
+        console.log(`[QA Worker] Evaluación finalizada para ${callId}. Score: ${qaScore}`);
+    } catch (err) {
+        console.error(`[QA Worker] Error procesando job de evaluación:`, err);
     }
 });
 

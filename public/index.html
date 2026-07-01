@@ -79,6 +79,15 @@
             </div>
         </header>
 
+        <!-- QA ALARMS BANNER -->
+        <div id="qa-alarms-banner" style="display: none; background-color: var(--accent-danger); color: white; padding: 0.75rem 1rem; border-radius: var(--radius-sm); margin-bottom: 1.5rem; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: var(--shadow-float); z-index: 100;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 600;">
+                <i data-feather="alert-triangle" style="width: 16px; height: 16px;"></i>
+                <span id="qa-alarm-text">ALERTA CRÍTICA: ...</span>
+            </div>
+            <button class="btn btn-ghost" style="color: white; padding: 0.25rem; display: flex; align-items: center; justify-content: center;" onclick="dismissQAAlarm()"><i data-feather="x" style="width: 16px; height: 16px;"></i></button>
+        </div>
+
         <!-- DYNAMIC STATS CARDS -->
         <section id="stats-section" class="dashboard-grid">
             <!-- Rendered dynamically by app.js -->

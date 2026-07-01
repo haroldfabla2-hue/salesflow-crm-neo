@@ -148,6 +148,14 @@ function initSocket() {
             }
         });
 
+        // Escuchar alertas críticas de QA y protección de datos
+        state.socket.on('critical_qa_alert', (data) => {
+            showToast(`⚠️ ALERTA DE QA CRÍTICA: ${data.message}`, 'danger');
+            if (state.simulatedRole === 'director' || state.simulatedRole === 'qa_auditor') {
+                triggerQABanner(data.message);
+            }
+        });
+
         state.socket.on('connect_error', (err) => {
             console.error('Error de conexión WebSocket:', err.message);
         });
@@ -322,6 +330,18 @@ function openLeadDrawer(leadId) {
                     <button id="btn-send-chat" onclick="sendChatMessage()"><i data-feather="send" style="width: 16px; height: 16px;"></i></button>
                 </div>
             </div>
+
+            <!-- HISTORIAL DE LLAMADAS Y CUMPLIMIENTO QA -->
+            <div class="chat-section" style="margin-top: 1.5rem;" id="drawer-voip-section">
+                <div class="chat-header">
+                    <i data-feather="headphones"></i> VoIP Call & QA Audit
+                </div>
+                <div class="chat-history" id="drawer-call-history" style="height: 120px;">
+                    <div style="text-align: center; color: var(--text-tertiary); font-size: 0.8rem; padding-top: 1.5rem;">
+                        Loading calls...
+                    </div>
+                </div>
+            </div>
         `;
         
         footer.innerHTML = `
@@ -333,6 +353,14 @@ function openLeadDrawer(leadId) {
 
         // Cargar historial de chat
         await loadChatHistory(leadId);
+
+        // Cargar historial de llamadas si el rol tiene acceso
+        if (state.simulatedRole === 'director' || state.simulatedRole === 'qa_auditor') {
+            await loadCallHistoryInDrawer(leadId);
+        } else {
+            const voipSec = document.getElementById('drawer-voip-section');
+            if (voipSec) voipSec.style.display = 'none'; // Esconder para asesores si no tienen RLS
+        }
     }, 300); // Simulate network fetch for deep details
 }
 
@@ -669,6 +697,130 @@ function renderUI() {
             </div>
         `;
     }
+    else if (state.simulatedRole === 'qa_auditor') {
+        const calls = state.interactions || [];
+        const totalCalls = calls.length;
+        const avgScore = totalCalls > 0 ? (calls.reduce((sum, c) => sum + (c.score || 0), 0) / totalCalls).toFixed(1) : '0';
+        
+        // Calcular tasa de cumplimiento Ley 29733
+        const compliantCalls = calls.filter(c => c.rubric?.ley29733_compliant === true).length;
+        const complianceRate = totalCalls > 0 ? ((compliantCalls / totalCalls) * 100).toFixed(0) + '%' : '0%';
+
+        statsSection.innerHTML = `
+            <div class="card metric-widget border-purple">
+                <div class="metric-title">Calls Audited</div>
+                <div class="metric-value">${totalCalls}</div>
+            </div>
+            <div class="card metric-widget border-blue">
+                <div class="metric-title">Average QA Score</div>
+                <div class="metric-value">${avgScore}</div>
+            </div>
+            <div class="card metric-widget border-emerald">
+                <div class="metric-title">Ley 29733 Compliance</div>
+                <div class="metric-value">${complianceRate}</div>
+            </div>
+            <div class="card metric-widget border-amber">
+                <div class="metric-title">Alerts Raised</div>
+                <div class="metric-value">${calls.filter(c => (c.score || 0) < 70 || c.rubric?.ley29733_compliant === false).length}</div>
+            </div>
+        `;
+
+        const selectedCall = calls.find(c => c.id === state.selectedCallId);
+
+        mainContent.innerHTML = `
+            <div class="card" style="grid-column: span 8;">
+                <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;"><i data-feather="headphones"></i> Auditable Interaction Registry</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Call ID</th>
+                                <th>Lead</th>
+                                <th>Agent</th>
+                                <th>Duration</th>
+                                <th>Score</th>
+                                <th>Ley 29733</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${calls.map(c => {
+                                const isCompliant = c.rubric?.ley29733_compliant;
+                                return `
+                                <tr class="${c.id === state.selectedCallId ? 'table-row-selected' : ''}">
+                                    <td style="font-family:monospace; font-size:0.75rem;">#${c.id.substring(0, 8)}...</td>
+                                    <td><strong>${c.leadName || 'Lead'}</strong></td>
+                                    <td>${c.agentName || 'Agent'}</td>
+                                    <td>${c.duration}s</td>
+                                    <td>
+                                        <span class="badge ${c.score >= 80 ? 'badge-emerald' : c.score >= 70 ? 'badge-blue' : 'badge-danger'}">
+                                            ${c.score !== null ? c.score : 'PENDING'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge ${isCompliant ? 'badge-emerald' : 'badge-danger'}">
+                                            ${isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="selectCall('${c.id}')">Audit</button>
+                                    </td>
+                                </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" style="grid-column: span 4;">
+                <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;"><i data-feather="shield"></i> Call Evaluation Panel</h3>
+                ${selectedCall ? `
+                    <div style="display:flex; flex-direction:column; gap:1rem;">
+                        <div class="detail-group">
+                            <span class="detail-label">Agent Owner</span>
+                            <div class="detail-value">${selectedCall.agentName || 'Agent'}</div>
+                        </div>
+                        <div class="detail-group">
+                            <span class="detail-label">QA Performance Score</span>
+                            <div style="font-size: 2.25rem; font-weight:700; color: ${selectedCall.score >= 70 ? 'var(--text-success)' : 'var(--accent-danger)'}">${selectedCall.score !== null ? selectedCall.score : 'Pending'}/100</div>
+                        </div>
+                        <div class="detail-group">
+                            <span class="detail-label">Transcript</span>
+                            <div style="background:var(--bg-surface-hover); padding:0.75rem; border-radius:var(--radius-sm); font-size:0.8rem; line-height:1.4; max-height:120px; overflow-y:auto; border:1px solid var(--border-subtle); color: var(--text-secondary);">
+                                "${selectedCall.transcript || '[No transcript recorded]'}"
+                            </div>
+                        </div>
+                        <div class="detail-group">
+                            <span class="detail-label">Auditor Checklist</span>
+                            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:0.5rem; font-size:0.85rem;">
+                                <li style="display:flex; align-items:center; gap:0.5rem;">
+                                    <i data-feather="${selectedCall.rubric?.ley29733_compliant ? 'check-circle' : 'x-circle'}" style="width:16px;height:16px;color:${selectedCall.rubric?.ley29733_compliant ? 'var(--text-success)' : 'var(--accent-danger)'}"></i>
+                                    Ley 29733 Consent Check
+                                </li>
+                                <li style="display:flex; align-items:center; gap:0.5rem;">
+                                    <i data-feather="${selectedCall.rubric?.greeting_check ? 'check-circle' : 'x-circle'}" style="width:16px;height:16px;color:${selectedCall.rubric?.greeting_check ? 'var(--text-success)' : 'var(--accent-danger)'}"></i>
+                                    Corporate Greeting Check
+                                </li>
+                                <li style="display:flex; align-items:center; gap:0.5rem;">
+                                    <i data-feather="${selectedCall.rubric?.product_explanation ? 'check-circle' : 'x-circle'}" style="width:16px;height:16px;color:${selectedCall.rubric?.product_explanation ? 'var(--text-success)' : 'var(--accent-danger)'}"></i>
+                                    Product Explanation Check
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="detail-group">
+                            <span class="detail-label">Observations</span>
+                            <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.4; background: var(--bg-surface-hover); padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+                                ${selectedCall.rubric?.observations || 'None'}
+                            </div>
+                        </div>
+                    </div>
+                ` : `
+                    <div style="text-align:center; color:var(--text-tertiary); padding:2rem 0;">Select a call to view evaluation logs.</div>
+                `}
+            </div>
+        `;
+    }
 
     feather.replace();
 }
@@ -824,6 +976,60 @@ function toggleMute() {
 function minimizeDialer() {
     const dialer = document.getElementById('dialer-widget');
     dialer.classList.toggle('minimized');
+}
+
+function triggerQABanner(message) {
+    const banner = document.getElementById('qa-alarms-banner');
+    const textEl = document.getElementById('qa-alarm-text');
+    if (banner && textEl) {
+        textEl.innerText = message;
+        banner.style.display = 'flex';
+        feather.replace();
+    }
+}
+
+function dismissQAAlarm() {
+    const banner = document.getElementById('qa-alarms-banner');
+    if (banner) {
+        banner.style.display = 'none';
+    }
+}
+
+async function loadCallHistoryInDrawer(leadId) {
+    const historyContainer = document.getElementById('drawer-call-history');
+    if (!historyContainer) return;
+
+    try {
+        const calls = await apiCall('/api/interactions');
+        const leadCalls = calls.filter(c => c.leadId === leadId);
+
+        if (leadCalls.length === 0) {
+            historyContainer.innerHTML = `
+                <div style="text-align: center; color: var(--text-tertiary); font-size: 0.8rem; padding-top: 1.5rem;">
+                    No calls recorded for this lead.
+                </div>
+            `;
+            return;
+        }
+
+        historyContainer.innerHTML = leadCalls.map(c => {
+            const isCompliant = c.rubric?.ley29733_compliant;
+            return `
+                <div style="padding: 0.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary);">${c.agentName} (${c.duration}s)</div>
+                        <div style="font-size: 0.7rem; color: var(--text-tertiary);">${c.date}</div>
+                    </div>
+                    <div style="display: flex; gap: 0.25rem;">
+                        <span class="badge ${c.score >= 70 ? 'badge-emerald' : 'badge-danger'}">Score: ${c.score !== null ? c.score : 'Pending'}</span>
+                        <span class="badge ${isCompliant ? 'badge-emerald' : 'badge-danger'}">${isCompliant ? 'Ley 29733 Ok' : 'Ley 29733 Fail'}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error('Error loading call history:', err);
+    }
 }
 
 // ----------------------------------------------------------------------------
