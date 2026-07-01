@@ -14,6 +14,7 @@ const db = require('./db');
 const cryptoUtil = require('./crypto_util');
 const ingestionUtil = require('./ingestion_util');
 const { uuidv7 } = require('uuidv7');
+const twilio = require('twilio');
 
 require('dotenv').config();
 
@@ -810,6 +811,123 @@ app.post('/api/chats/:leadId/messages', authenticateToken, async (req, res) => {
     } catch (err) {
         console.error('Error enviando mensaje:', err);
         res.status(500).json({ error: 'Error al enviar mensaje o RLS bloqueó el acceso.' });
+    }
+});
+
+// ----------------------------------------------------------------------------
+// ROUTES: VOIP TELEPHONY (TWILIO INTEGRATION & WEBRTC SIMULATOR)
+// ----------------------------------------------------------------------------
+
+app.get('/api/voip/token', authenticateToken, (req, res) => {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const apiKey = process.env.TWILIO_API_KEY_SID;
+    const apiSecret = process.env.TWILIO_API_KEY_SECRET;
+    const twimlAppSid = process.env.TWILIO_TWIML_APP_SID;
+
+    // Si faltan credenciales, activar simulador WebRTC interactivo
+    if (!accountSid || !apiKey || !apiSecret || !twimlAppSid) {
+        console.warn('⚠️  ADVERTENCIA DE VOIP: Credenciales de Twilio incompletas. Iniciando en MODO SIMULACIÓN.');
+        return res.json({
+            token: 'simulation_token_salesflow_crm_webrtc_2026',
+            identity: req.user.email,
+            isSimulation: true
+        });
+    }
+
+    try {
+        const AccessToken = twilio.jwt.AccessToken;
+        const VoiceGrant = AccessToken.VoiceGrant;
+
+        const accessToken = new AccessToken(accountSid, apiKey, apiSecret, {
+            identity: req.user.email,
+            ttl: 3600
+        });
+
+        const grant = new VoiceGrant({
+            outgoingApplicationSid: twimlAppSid,
+            incomingAllow: true
+        });
+        accessToken.addGrant(grant);
+
+        res.json({
+            token: accessToken.toJwt(),
+            identity: req.user.email,
+            isSimulation: false
+        });
+    } catch (err) {
+        console.error('Error generando Twilio VoIP token:', err);
+        res.status(500).json({ error: 'Error interno al generar token VoIP.' });
+    }
+});
+
+app.post('/api/voip/voice', (req, res) => {
+    const twiml = new twilio.twiml.VoiceResponse();
+    const to = req.body.To || req.query.To;
+
+    if (to) {
+        const callerId = process.env.TWILIO_CALLER_ID || '+1234567890';
+        const dial = twiml.dial({
+            callerId: callerId,
+            record: 'record-from-answer',
+            recordingStatusCallback: '/api/voip/recordings'
+        });
+        dial.number(to);
+    } else {
+        twiml.say('Número de teléfono inválido.');
+    }
+
+    res.type('text/xml');
+    res.send(twiml.toString());
+});
+
+app.post('/api/voip/calls', authenticateToken, async (req, res) => {
+    const { leadId } = req.body;
+    try {
+        const callId = uuidv7();
+
+        // Verificar primero RLS para asegurar que el agente tiene acceso al Lead
+        const leadCheck = await db.queryWithSession('SELECT id FROM leads WHERE id = $1', [leadId], req.user);
+        if (leadCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Acceso denegado al Lead por RLS.' });
+        }
+
+        await db.query(
+            `INSERT INTO calls_and_interactions (id, lead_id, agent_id, interaction_type, duration_seconds) 
+             VALUES ($1, $2, $3, $4, $5)`,
+            [callId, leadId, req.user.id, 'call', 0]
+        );
+
+        res.status(201).json({ callId });
+    } catch (err) {
+        console.error('Error registrando inicio de llamada:', err);
+        res.status(500).json({ error: 'Error al registrar llamada o RLS bloqueó el acceso.' });
+    }
+});
+
+app.put('/api/voip/calls/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    const { durationSeconds, audioUrl, transcript } = req.body;
+
+    try {
+        const simulatedAudio = audioUrl || 'demo.mp3';
+        const simulatedTranscript = transcript || '[Llamada de ventas simulada - Ley 29733 validada]';
+
+        await db.query(
+            `UPDATE calls_and_interactions 
+             SET duration_seconds = $1, audio_recording_url = $2, transcript_text = $3
+             WHERE id = $4`,
+            [parseInt(durationSeconds, 10), simulatedAudio, simulatedTranscript, id]
+        );
+
+        // Encolar evaluación de IA de QA en segundo plano (Sprint 4)
+        await queueManager.addJob('ai_qa_evaluation_queue', 'evaluate_call_qa', {
+            callId: id
+        });
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error finalizando registro de llamada:', err);
+        res.status(500).json({ error: 'Error al actualizar llamada o RLS bloqueó el acceso.' });
     }
 });
 

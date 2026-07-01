@@ -16,6 +16,7 @@
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.11.5",
     "socket.io": "^4.8.3",
+    "twilio": "^6.0.2",
     "uuidv7": "^1.2.1"
   },
   "engines": {

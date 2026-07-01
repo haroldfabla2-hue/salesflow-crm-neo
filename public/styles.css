@@ -557,3 +557,113 @@ tr:hover td { background-color: var(--bg-canvas); }
 .chat-bubble.bubble-user .chat-time {
     color: rgba(255, 255, 255, 0.8);
 }
+
+/* ============================================================================
+   VOIP FLOATING DIALER WIDGET
+   ============================================================================ */
+.dialer-widget {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 280px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-float);
+    z-index: 1000;
+    overflow: hidden;
+    transform: translateY(150%);
+    transition: transform var(--transition-smooth);
+}
+.dialer-widget.active {
+    transform: translateY(0);
+}
+.dialer-widget.minimized {
+    transform: translateY(calc(100% - 40px));
+}
+.dialer-header {
+    background-color: var(--bg-surface-hover);
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-secondary);
+}
+.btn-close-dialer {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-close-dialer:hover {
+    color: var(--text-primary);
+}
+.dialer-body {
+    padding: 1.5rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.dialer-timer {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-family: monospace;
+    letter-spacing: -0.02em;
+}
+.dialer-number {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 0.25rem;
+}
+.dialer-number-sub {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-family: monospace;
+}
+.dialer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+.btn-dialer {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.1s;
+}
+.btn-dialer:active {
+    transform: scale(0.95);
+}
+.btn-mute {
+    background-color: var(--bg-surface-hover);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+.btn-mute.muted {
+    background-color: var(--accent-warning);
+    color: #ffffff;
+    border-color: var(--accent-warning);
+}
+.btn-hangup {
+    background-color: var(--accent-danger);
+    color: #ffffff;
+}
+.btn-hangup:hover {
+    background-color: #e03b3b;
+}

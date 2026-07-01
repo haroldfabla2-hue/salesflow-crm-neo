@@ -125,8 +125,28 @@
         </div>
     </div>
 
+    <!-- VOIP FLOATING DIALER -->
+    <div class="dialer-widget" id="dialer-widget">
+        <div class="dialer-header">
+            <span style="display: flex; align-items: center; gap: 0.5rem;"><i data-feather="phone-call" style="width:16px;height:16px;"></i> VoIP Dialer</span>
+            <button class="btn-close-dialer" onclick="minimizeDialer()"><i data-feather="chevron-down" style="width:16px;height:16px;"></i></button>
+        </div>
+        <div class="dialer-body">
+            <div class="dialer-timer" id="dialer-timer">00:00</div>
+            <div class="dialer-number" id="dialer-target-name">No active call</div>
+            <div class="dialer-number-sub" id="dialer-target-phone">-</div>
+            <div class="dialer-controls">
+                <button class="btn-dialer btn-mute" id="btn-dialer-mute" onclick="toggleMute()"><i data-feather="mic" style="width:18px;height:18px;"></i></button>
+                <button class="btn-dialer btn-hangup" id="btn-dialer-hangup" onclick="hangUpCall()"><i data-feather="phone-off" style="width:18px;height:18px;"></i></button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATIONS -->
     <div id="toast-container" class="toast-container"></div>
+
+    <!-- TWILIO VOICE SDK -->
+    <script src="https://sdk.twilio.com/js/voice/v1.13/twilio.min.js"></script>
 
     <!-- CLIENT SCRIPT -->
     <script src="/socket.io/socket.io.js"></script>

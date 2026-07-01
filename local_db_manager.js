@@ -220,32 +220,63 @@ class LocalDbManager {
             return { rows: calls };
         }
 
-        // 8. UPDATE calls_and_interactions (QA Evaluation)
+        // 8. UPDATE calls_and_interactions
         if (sql.startsWith('update calls_and_interactions')) {
-            const call = this.data.calls_and_interactions.find(c => c.id === params[2]);
-            if (call) {
-                call.qa_score = params[0];
-                call.qa_evaluation_details = typeof params[1] === 'string' ? JSON.parse(params[1]) : params[1];
-                this.save();
-                return { rows: [{ lead_id: call.lead_id }] };
+            if (sql.includes('duration_seconds = $1')) {
+                // VoIP update: params = [duration, audio, transcript, id]
+                const call = this.data.calls_and_interactions.find(c => c.id === params[3]);
+                if (call) {
+                    call.duration_seconds = params[0];
+                    call.audio_recording_url = params[1];
+                    call.transcript_text = params[2];
+                    this.save();
+                    return { rows: [{ lead_id: call.lead_id }] };
+                }
+            } else {
+                // QA Evaluation update: params = [qa_score, qa_details, id]
+                const call = this.data.calls_and_interactions.find(c => c.id === params[2]);
+                if (call) {
+                    call.qa_score = params[0];
+                    call.qa_evaluation_details = typeof params[1] === 'string' ? JSON.parse(params[1]) : params[1];
+                    this.save();
+                    return { rows: [{ lead_id: call.lead_id }] };
+                }
             }
             return { rows: [] };
         }
 
         // 9. INSERT INTO calls_and_interactions
         if (sql.startsWith('insert into calls_and_interactions')) {
-            const newCall = {
-                id: 'call-' + (this.data.calls_and_interactions.length + 1),
-                lead_id: params[0],
-                agent_id: params[1],
-                interaction_type: 'call',
-                duration_seconds: params[3],
-                audio_recording_url: params[4],
-                transcript_text: params[5],
-                qa_score: null,
-                qa_evaluation_details: {},
-                created_at: new Date().toISOString()
-            };
+            let newCall;
+            if (params.length === 5) {
+                // New VoIP query format: [id, lead_id, agent_id, type, duration]
+                newCall = {
+                    id: params[0],
+                    lead_id: params[1],
+                    agent_id: params[2],
+                    interaction_type: params[3],
+                    duration_seconds: params[4],
+                    audio_recording_url: null,
+                    transcript_text: null,
+                    qa_score: null,
+                    qa_evaluation_details: {},
+                    created_at: new Date().toISOString()
+                };
+            } else {
+                // Old query format: [lead_id, agent_id, type, duration, audio, transcript]
+                newCall = {
+                    id: 'call-' + (this.data.calls_and_interactions.length + 1),
+                    lead_id: params[0],
+                    agent_id: params[1],
+                    interaction_type: 'call',
+                    duration_seconds: params[3],
+                    audio_recording_url: params[4],
+                    transcript_text: params[5],
+                    qa_score: null,
+                    qa_evaluation_details: {},
+                    created_at: new Date().toISOString()
+                };
+            }
             this.data.calls_and_interactions.push(newCall);
             this.save();
             return { rows: [newCall] };

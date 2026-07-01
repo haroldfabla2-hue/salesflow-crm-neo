@@ -184,6 +184,8 @@ function checkAuth() {
 
         // Inicializar conexión Socket de tiempo real
         initSocket();
+        // Inicializar servicios VoIP Twilio/Simulación WebRTC
+        initVoIP();
         fetchData();
     } else {
         document.getElementById('login-screen').style.display = 'flex';
@@ -293,7 +295,12 @@ function openLeadDrawer(leadId) {
             </div>
             <div class="detail-group">
                 <span class="detail-label">Phone Number</span>
-                <div class="detail-value">${lead.phone}</div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <div class="detail-value" style="flex-grow: 1;">${lead.phone}</div>
+                    <button class="btn btn-primary" style="padding: 0.5rem; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm);" onclick="startVoIPCall('${lead.id}')">
+                        <i data-feather="phone" style="width:16px;height:16px;"></i>
+                    </button>
+                </div>
             </div>
             <div class="detail-group">
                 <span class="detail-label">Agent (Owner)</span>
@@ -664,6 +671,159 @@ function renderUI() {
     }
 
     feather.replace();
+}
+
+// ----------------------------------------------------------------------------
+// TELEPHONY: VOIP & WEBRTC SIMULATOR (SPRINT 3)
+// ----------------------------------------------------------------------------
+let twilioDevice = null;
+let activeCallId = null;
+let callTimerInterval = null;
+let callSeconds = 0;
+let isMuted = false;
+let isVoIPSimulation = true;
+
+async function initVoIP() {
+    try {
+        const res = await apiCall('/api/voip/token');
+        isVoIPSimulation = res.isSimulation;
+        
+        if (isVoIPSimulation) {
+            console.log('☎️  Telefonía: Modo Simulación WebRTC Activo.');
+        } else {
+            console.log('☎️  Conectando con SDK de Twilio Voice...');
+            // Inicializar Twilio Device
+            twilioDevice = new Twilio.Device(res.token, {
+                codecPreferences: ['opus', 'pcmu'],
+                fakeLocalDTMF: true,
+                enableRingingState: true
+            });
+            
+            twilioDevice.on('ready', () => console.log('☎️ Twilio VoIP Device listo.'));
+            twilioDevice.on('error', (err) => console.error('Error en Twilio Device:', err));
+        }
+    } catch (err) {
+        console.error('Error al inicializar telefonía VoIP:', err);
+    }
+}
+
+async function startVoIPCall(leadId) {
+    const lead = state.leads.find(l => l.id === leadId);
+    if (!lead) return;
+
+    try {
+        showToast(`Calling ${lead.firstName}...`, 'info');
+
+        // 1. Crear el registro en la BD y obtener Call ID
+        const res = await apiCall('/api/voip/calls', 'POST', { leadId });
+        activeCallId = res.callId;
+
+        // 2. Mostrar Dialer Widget
+        const dialer = document.getElementById('dialer-widget');
+        document.getElementById('dialer-target-name').innerText = `${lead.firstName} ${lead.lastName}`;
+        document.getElementById('dialer-target-phone').innerText = lead.phone;
+        dialer.classList.add('active');
+        dialer.classList.remove('minimized');
+
+        // 3. Resetear cronómetro
+        callSeconds = 0;
+        document.getElementById('dialer-timer').innerText = '00:00';
+        document.getElementById('btn-dialer-mute').classList.remove('muted');
+        isMuted = false;
+
+        // 4. Iniciar llamada
+        if (isVoIPSimulation) {
+            // Modo Simulación: empezar conteo inmediatamente
+            startCallTimer();
+        } else {
+            // Modo Real: Twilio Device Connect
+            const params = { To: lead.phone };
+            twilioDevice.connect(params);
+            
+            twilioDevice.on('connect', () => {
+                startCallTimer();
+                showToast('Call established in real time.', 'success');
+            });
+        }
+    } catch (err) {
+        showToast(`Llamada fallida: ${err.message}`, 'danger');
+    }
+}
+
+function startCallTimer() {
+    if (callTimerInterval) clearInterval(callTimerInterval);
+    
+    callTimerInterval = setInterval(() => {
+        callSeconds++;
+        const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+        const secs = String(callSeconds % 60).padStart(2, '0');
+        document.getElementById('dialer-timer').innerText = `${mins}:${secs}`;
+    }, 1000);
+}
+
+async function hangUpCall() {
+    if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+        callTimerInterval = null;
+    }
+
+    if (!activeCallId) return;
+
+    const seconds = callSeconds;
+    const callId = activeCallId;
+    activeCallId = null;
+
+    try {
+        showToast('Hanging up call...', 'warning');
+
+        if (!isVoIPSimulation && twilioDevice) {
+            twilioDevice.disconnectAll();
+        }
+
+        // Actualizar registro en base de datos al colgar
+        await apiCall(`/api/voip/calls/${callId}`, 'PUT', {
+            durationSeconds: seconds,
+            audioUrl: 'demo.mp3',
+            transcript: 'Hola, buenas tardes, solicito información sobre la especialización de Ventas y el funnel de Marketing...'
+        });
+
+        showToast('Call registered and queued for IA QA audit.', 'success');
+        
+        // Esconder Dialer
+        document.getElementById('dialer-widget').classList.remove('active');
+        
+        // Refrescar paneles
+        fetchData();
+    } catch (err) {
+        showToast('Error registering call duration', 'danger');
+    }
+}
+
+function toggleMute() {
+    const btn = document.getElementById('btn-dialer-mute');
+    isMuted = !isMuted;
+    
+    if (isMuted) {
+        btn.classList.add('muted');
+        showToast('Microphone muted', 'warning');
+        if (!isVoIPSimulation && twilioDevice) {
+            // Twilio Mute logic
+            const activeConn = twilioDevice.activeConnection();
+            if (activeConn) activeConn.mute(true);
+        }
+    } else {
+        btn.classList.remove('muted');
+        showToast('Microphone unmuted', 'success');
+        if (!isVoIPSimulation && twilioDevice) {
+            const activeConn = twilioDevice.activeConnection();
+            if (activeConn) activeConn.mute(false);
+        }
+    }
+}
+
+function minimizeDialer() {
+    const dialer = document.getElementById('dialer-widget');
+    dialer.classList.toggle('minimized');
 }
 
 // ----------------------------------------------------------------------------
